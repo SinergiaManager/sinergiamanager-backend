@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+var DB *mongo.Database
+
 func ConnectDb() {
 
 	if err := godotenv.Load(); err != nil {
@@ -35,6 +37,13 @@ func ConnectDb() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_ = client.Ping(ctx, readpref.Primary())
+	err = client.Ping(ctx, readpref.Primary())
 
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	DB = client.Database(os.Getenv("MONGO_DB"))
+
+	log.Println("Connected to MongoDB!")
 }

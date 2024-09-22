@@ -1,9 +1,14 @@
 package main
 
-import "github.com/kataras/iris/v12"
+import (
+	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+
+	"github.com/kataras/iris/v12"
+)
 
 func main() {
 	app := iris.New()
+	Config.ConnectDb()
 
 	type PingResponse struct {
 		Message string `json:"message"`
