@@ -2,25 +2,20 @@ package main
 
 import (
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
 
 	"github.com/kataras/iris/v12"
 )
 
 func main() {
-	app := iris.New()
 	Config.ConnectDb()
+	defer Config.DisconnectDb()
+	app := iris.New()
 
-	type PingResponse struct {
-		Message string `json:"message"`
+	user := app.Party("/user")
+	{
+		user.Get("/", Controllers.GetAllUsers)
 	}
-
-	app.Get("/ping", func(ctx iris.Context) {
-		res := PingResponse{
-			Message: "pong",
-		}
-
-		ctx.JSON(res)
-	})
 
 	app.Listen(":8080")
 }

@@ -13,6 +13,7 @@ import (
 )
 
 var DB *mongo.Database
+var client *mongo.Client
 
 func ConnectDb() {
 
@@ -28,12 +29,6 @@ func ConnectDb() {
 		log.Fatal(err)
 	}
 
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -46,4 +41,12 @@ func ConnectDb() {
 	DB = client.Database(os.Getenv("MONGO_DB"))
 
 	log.Println("Connected to MongoDB!")
+}
+
+func DisconnectDb() {
+	err := client.Disconnect(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Disconnected from MongoDB!")
 }
