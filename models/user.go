@@ -13,8 +13,10 @@ type UserDb struct {
 }
 
 type UserIns struct {
-	Username string `json:"username" bson:"username"`
-	Name     string `json:"name" bson:"name"`
-	Surname  string `json:"surname" bson:"surname"`
-	Email    string `json:"email" bson:"email"`
+	Username string    `json:"username" bson:"username"`
+	Name     string    `json:"name" bson:"name"`
+	Surname  string    `json:"surname" bson:"surname"`
+	Email    string    `json:"email" bson:"email"`
+	InsertAt time.Time `json:"insertAt" bson:"insert_at"`
+	UpdateAt time.Time `json:"updateAt" bson:"update_at"`
 }

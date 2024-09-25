@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 
@@ -39,6 +41,9 @@ func CreateUser(ctx iris.Context) {
 		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
+	user.InsertAt = time.Now().UTC()
+	user.UpdateAt = time.Now().UTC()
+
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": user})
 }
