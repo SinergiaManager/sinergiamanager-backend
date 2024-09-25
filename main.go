@@ -15,6 +15,7 @@ func main() {
 	user := app.Party("/user")
 	{
 		user.Get("/", Controllers.GetAllUsers)
+		user.Post("/", Controllers.CreateUser)
 	}
 
 	app.Listen(":8080")

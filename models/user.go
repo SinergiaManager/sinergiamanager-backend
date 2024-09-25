@@ -2,12 +2,19 @@ package models
 
 import "time"
 
-type User struct {
-	ID       string `bson:"_id"`
-	Username string
-	Name     string
-	Surname  string
-	Email    string
-	InsertAt time.Time
-	UpdateAt time.Time
+type UserDb struct {
+	ID       string    `bson:"_id"`
+	Username string    `bson:"username"`
+	Name     string    `bson:"name"`
+	Surname  string    `bson:"surname"`
+	Email    string    `bson:"email"`
+	InsertAt time.Time `bson:"insert_at"`
+	UpdateAt time.Time `bson:"update_at"`
+}
+
+type UserIns struct {
+	Username string `json:"username" bson:"username"`
+	Name     string `json:"name" bson:"name"`
+	Surname  string `json:"surname" bson:"surname"`
+	Email    string `json:"email" bson:"email"`
 }

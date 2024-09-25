@@ -19,7 +19,7 @@ func GetAllUsers(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var users []*Model.User
+	var users []*Model.UserDb
 	if err = cursor.All(ctx, &users); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -29,4 +29,16 @@ func GetAllUsers(ctx iris.Context) {
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": users})
 
+}
+
+func CreateUser(ctx iris.Context) {
+	var user *Model.UserIns
+	err := ctx.ReadJSON(&user)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"data": user})
 }
