@@ -15,7 +15,7 @@ func GetAllUsers(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 
@@ -24,7 +24,7 @@ func GetAllUsers(ctx iris.Context) {
 	var users []*Model.UserDb
 	if err = cursor.All(ctx, &users); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 
@@ -44,6 +44,13 @@ func CreateUser(ctx iris.Context) {
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
 
+	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"data": user})
+	ctx.JSON(iris.Map{"message": "User created successfully"})
 }

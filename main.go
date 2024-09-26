@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
 
@@ -8,8 +10,12 @@ import (
 )
 
 func main() {
-	Config.ConnectDb()
+	if err := Config.ConnectDb(); err != nil {
+		Config.DisconnectDb()
+		log.Fatalf("Error connecting to MongoDB: %v", err)
+	}
 	defer Config.DisconnectDb()
+
 	app := iris.New()
 
 	user := app.Party("/user")
