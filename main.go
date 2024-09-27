@@ -22,6 +22,7 @@ func main() {
 	{
 		user.Get("/", Controllers.GetAllUsers)
 		user.Post("/", Controllers.CreateUser)
+		user.Delete("/{id:string}", Controllers.DeleteUser)
 	}
 
 	app.Listen(":8080")

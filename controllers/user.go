@@ -8,6 +8,7 @@ import (
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func GetAllUsers(ctx iris.Context) {
@@ -53,4 +54,30 @@ func CreateUser(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"message": "User created successfully"})
+}
+
+func DeleteUser(ctx iris.Context) {
+	id := ctx.Params().Get("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+	filter := bson.M{"_id": objectID}
+	result, err := Config.DB.Collection("users").DeleteOne(ctx, filter)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		ctx.StatusCode(iris.StatusNotFound)
+		ctx.JSON(iris.Map{"error": "User not found"})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "User deleted successfully"})
 }
