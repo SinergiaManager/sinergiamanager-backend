@@ -25,5 +25,10 @@ func main() {
 		user.Delete("/{id:string}", Controllers.DeleteUser)
 	}
 
+	item := app.Party("/item")
+	{
+		item.Get("/", Controllers.GetAllItems)
+	}
+
 	app.Listen(":8080")
 }
