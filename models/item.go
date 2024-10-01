@@ -12,7 +12,7 @@ type ItemDB struct {
 	UpdateAt    time.Time `bson:"update_at"`
 }
 
-type Item struct {
+type ItemIns struct {
 	Name        string    `json:"name" bson:"name"`
 	Code        string    `json:"code" bson:"code"`
 	SupplierID  string    `json:"supplier_id" bson:"supplier_id"`

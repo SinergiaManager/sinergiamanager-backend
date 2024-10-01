@@ -28,6 +28,8 @@ func main() {
 	item := app.Party("/item")
 	{
 		item.Get("/", Controllers.GetAllItems)
+		item.Post("/", Controllers.CreateItem)
+		item.Delete("/{id:string}", Controllers.DeleteItem)
 	}
 
 	app.Listen(":8080")
