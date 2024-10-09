@@ -30,6 +30,7 @@ func main() {
 	{
 		item.Get("/", Controllers.GetAllItems)
 		item.Post("/", Controllers.CreateItem)
+		item.Put("/{id:string}", Controllers.UpdateItem)
 		item.Delete("/{id:string}", Controllers.DeleteItem)
 	}
 
