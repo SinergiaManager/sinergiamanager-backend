@@ -37,7 +37,7 @@ func GetAllUsers(ctx iris.Context) {
 
 func CreateUser(ctx iris.Context) {
 	var user *Model.UserIns
-	err := ctx.ReadJSON(&user)
+	err := ctx.ReadBody(&user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -55,6 +55,40 @@ func CreateUser(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusCreated)
 	ctx.JSON(iris.Map{"message": "User created successfully"})
+}
+
+func UpdateUser(ctx iris.Context) {
+	var updateData map[string]interface{}
+
+	id := ctx.Params().Get("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = ctx.ReadBody(&updateData)
+
+	update := bson.D{{"$set", bson.D{}}}
+
+	setFields := bson.D{}
+
+	for key, value := range updateData {
+		setFields = append(setFields, bson.E{key, value})
+	}
+
+	update[0].Value = setFields
+
+	_, err = Config.DB.Collection("users").UpdateByID(ctx, objectID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "User updated successfully"})
 }
 
 func DeleteUser(ctx iris.Context) {

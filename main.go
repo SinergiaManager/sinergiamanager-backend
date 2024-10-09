@@ -22,6 +22,7 @@ func main() {
 	{
 		user.Get("/", Controllers.GetAllUsers)
 		user.Post("/", Controllers.CreateUser)
+		user.Put("/{id:string}", Controllers.UpdateUser)
 		user.Delete("/{id:string}", Controllers.DeleteUser)
 	}
 
