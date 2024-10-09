@@ -22,7 +22,7 @@ func GetAllUsers(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var users []*Model.UserDb
+	var users []*Model.UserOut
 
 	if err = cursor.All(ctx, &users); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)

@@ -30,7 +30,7 @@ func GetAllItems(ctx iris.Context) {
 	}
 
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"items": items})
+	ctx.JSON(iris.Map{"data": items})
 
 }
 
