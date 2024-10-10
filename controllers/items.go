@@ -1,18 +1,33 @@
 package controllers
 
 import (
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	"time"
+
+	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetAllItems(ctx iris.Context) {
-	cursor, err := Config.DB.Collection("items").Find(ctx, bson.M{})
+	limit, err := ctx.URLParamInt("limit")
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
 
+	skip, err := ctx.URLParamInt("skip")
+	if err != nil || skip < 0 {
+		skip = 0
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(skip))
+
+	cursor, err := ConfigDb.DB.Collection("items").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -31,7 +46,6 @@ func GetAllItems(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": items})
-
 }
 
 func CreateItem(ctx iris.Context) {
@@ -46,7 +60,7 @@ func CreateItem(ctx iris.Context) {
 	item.InsertAt = time.Now().UTC()
 	item.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("items").InsertOne(ctx, item)
+	_, err = ConfigDb.DB.Collection("items").InsertOne(ctx, item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -58,7 +72,7 @@ func CreateItem(ctx iris.Context) {
 }
 
 func UpdateItem(ctx iris.Context) {
-	var updateData map[string]interface{}
+	var updateData = make(map[string]interface{})
 
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -70,7 +84,7 @@ func UpdateItem(ctx iris.Context) {
 
 	err = ctx.ReadBody(&updateData)
 
-	update := bson.D{{"$set", bson.D{}}}
+	update := bson.D{{Key: "$set", Value: bson.D{}}}
 
 	setFields := bson.D{}
 
@@ -80,15 +94,19 @@ func UpdateItem(ctx iris.Context) {
 
 	update[0].Value = setFields
 
-	_, err = Config.DB.Collection("items").UpdateByID(ctx, objectID, update)
+	updateData["update_at"] = time.Now().UTC()
+
+	_, err = ConfigDb.DB.Collection("items").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
+	updatedData := ConfigDb.DB.Collection("items").FindOne(ctx, bson.M{"_id": objectID})
+
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"message": "Item updated successfully"})
+	ctx.JSON(iris.Map{"data": updatedData})
 }
 
 func DeleteItem(ctx iris.Context) {
@@ -102,7 +120,7 @@ func DeleteItem(ctx iris.Context) {
 
 	filter := bson.M{"_id": objectID}
 
-	result, err := Config.DB.Collection("items").DeleteOne(ctx, filter)
+	result, err := ConfigDb.DB.Collection("items").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

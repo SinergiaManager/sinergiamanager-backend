@@ -3,17 +3,32 @@ package controllers
 import (
 	"time"
 
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	ConfigAuth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
+	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetAllUsers(ctx iris.Context) {
-	cursor, err := Config.DB.Collection("users").Find(ctx, bson.M{})
+	limit, err := ctx.URLParamInt("limit")
+	if err != nil || limit <= 0 {
+		limit = 10 // default limit
+	}
 
+	skip, err := ctx.URLParamInt("skip")
+	if err != nil || skip < 0 {
+		skip = 0 // default skip
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(skip))
+
+	cursor, err := ConfigDb.DB.Collection("users").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -32,7 +47,6 @@ func GetAllUsers(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": users})
-
 }
 
 func CreateUser(ctx iris.Context) {
@@ -40,16 +54,16 @@ func CreateUser(ctx iris.Context) {
 	err := ctx.ReadBody(&user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
+	_, err = ConfigDb.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
@@ -58,9 +72,15 @@ func CreateUser(ctx iris.Context) {
 }
 
 func UpdateUser(ctx iris.Context) {
-	var updateData map[string]interface{}
+	user := ctx.Values().Get("user").(ConfigAuth.UserClaims)
 
 	id := ctx.Params().Get("id")
+	if user.Id != id && user.Role != "admin" {
+		ctx.StatusCode(iris.StatusForbidden)
+		ctx.JSON(iris.Map{"error": "You are not allowed to update this user"})
+		return
+	}
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -68,9 +88,12 @@ func UpdateUser(ctx iris.Context) {
 		return
 	}
 
+	var updateData = make(map[string]interface{})
+	updateData["update_at"] = time.Now().UTC()
+
 	err = ctx.ReadBody(&updateData)
 
-	update := bson.D{{"$set", bson.D{}}}
+	update := bson.D{{Key: "$set", Value: bson.D{}}}
 
 	setFields := bson.D{}
 
@@ -80,15 +103,23 @@ func UpdateUser(ctx iris.Context) {
 
 	update[0].Value = setFields
 
-	_, err = Config.DB.Collection("users").UpdateByID(ctx, objectID, update)
+	_, err = ConfigDb.DB.Collection("users").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	updatedUser := &Model.UserOut{}
+	err = ConfigDb.DB.Collection("users").FindOne(ctx, bson.M{"_id": objectID}).Decode(updatedUser)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"message": "User updated successfully"})
+	ctx.JSON(iris.Map{"data": updatedUser})
 }
 
 func DeleteUser(ctx iris.Context) {
@@ -100,7 +131,7 @@ func DeleteUser(ctx iris.Context) {
 		return
 	}
 	filter := bson.M{"_id": objectID}
-	result, err := Config.DB.Collection("users").DeleteOne(ctx, filter)
+	result, err := ConfigDb.DB.Collection("users").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

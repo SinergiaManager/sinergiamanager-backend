@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -42,6 +43,17 @@ func ConnectDb() error {
 	}
 
 	DB = client.Database(os.Getenv("MONGO_DB"))
+
+	_, err = DB.Collection("users").Indexes().CreateOne(
+		context.TODO(),
+		mongo.IndexModel{
+			Keys:    bson.D{{Key: "email", Value: 1}, {Key: "username", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		})
+
+	if err != nil {
+		return fmt.Errorf("failed to create index: %w", err)
+	}
 
 	log.Println("Connected to MongoDB!")
 
