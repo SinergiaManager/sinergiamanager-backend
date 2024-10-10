@@ -39,7 +39,7 @@ func main() {
 	auth := app.Party("/auth")
 	{
 		auth.Post("/login", Controllers.Login)
-		auth.Post("/logout", Controllers.Logout)
+		auth.Post("/logout", ConfigAuth.JWTMiddleware([]string{}), Controllers.Logout)
 		auth.Post("/register", Controllers.Register)
 	}
 

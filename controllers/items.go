@@ -6,14 +6,28 @@ import (
 	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetAllItems(ctx iris.Context) {
-	cursor, err := ConfigDb.DB.Collection("items").Find(ctx, bson.M{})
+	limit, err := ctx.URLParamInt("limit")
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
 
+	skip, err := ctx.URLParamInt("skip")
+	if err != nil || skip < 0 {
+		skip = 0
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(skip))
+
+	cursor, err := ConfigDb.DB.Collection("items").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -32,7 +46,6 @@ func GetAllItems(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": items})
-
 }
 
 func CreateItem(ctx iris.Context) {

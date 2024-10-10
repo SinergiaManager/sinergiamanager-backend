@@ -10,11 +10,25 @@ import (
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetAllUsers(ctx iris.Context) {
-	cursor, err := ConfigDb.DB.Collection("users").Find(ctx, bson.M{})
+	limit, err := ctx.URLParamInt("limit")
+	if err != nil || limit <= 0 {
+		limit = 10 // default limit
+	}
 
+	skip, err := ctx.URLParamInt("skip")
+	if err != nil || skip < 0 {
+		skip = 0 // default skip
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(skip))
+
+	cursor, err := ConfigDb.DB.Collection("users").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -33,7 +47,6 @@ func GetAllUsers(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": users})
-
 }
 
 func CreateUser(ctx iris.Context) {
