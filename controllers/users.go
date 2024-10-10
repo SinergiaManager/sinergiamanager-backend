@@ -40,7 +40,7 @@ func CreateUser(ctx iris.Context) {
 	err := ctx.ReadBody(&user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 	user.InsertAt = time.Now().UTC()
@@ -49,7 +49,7 @@ func CreateUser(ctx iris.Context) {
 	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 
@@ -83,7 +83,7 @@ func UpdateUser(ctx iris.Context) {
 	_, err = Config.DB.Collection("users").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 
