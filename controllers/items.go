@@ -72,7 +72,7 @@ func CreateItem(ctx iris.Context) {
 }
 
 func UpdateItem(ctx iris.Context) {
-	var updateData map[string]interface{}
+	var updateData = make(map[string]interface{})
 
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -94,6 +94,8 @@ func UpdateItem(ctx iris.Context) {
 
 	update[0].Value = setFields
 
+	updateData["update_at"] = time.Now().UTC()
+
 	_, err = ConfigDb.DB.Collection("items").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -101,8 +103,10 @@ func UpdateItem(ctx iris.Context) {
 		return
 	}
 
+	updatedData := ConfigDb.DB.Collection("items").FindOne(ctx, bson.M{"_id": objectID})
+
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"message": "Item updated successfully"})
+	ctx.JSON(iris.Map{"data": updatedData})
 }
 
 func DeleteItem(ctx iris.Context) {
