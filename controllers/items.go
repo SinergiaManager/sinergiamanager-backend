@@ -58,6 +58,40 @@ func CreateItem(ctx iris.Context) {
 	ctx.JSON(iris.Map{"message": "Item created successfully"})
 }
 
+func UpdateItem(ctx iris.Context) {
+	var updateData map[string]interface{}
+
+	id := ctx.Params().Get("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = ctx.ReadBody(&updateData)
+
+	update := bson.D{{"$set", bson.D{}}}
+
+	setFields := bson.D{}
+
+	for key, value := range updateData {
+		setFields = append(setFields, bson.E{key, value})
+	}
+
+	update[0].Value = setFields
+
+	_, err = Config.DB.Collection("items").UpdateByID(ctx, objectID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "Item updated successfully"})
+}
+
 func DeleteItem(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
