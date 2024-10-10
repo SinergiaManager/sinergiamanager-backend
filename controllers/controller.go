@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	Auth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
 	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
@@ -31,15 +33,40 @@ func Login(ctx iris.Context) {
 		return
 	}
 
-	token := Auth.GenerateToken(Auth.Signer, user)
+	token, err := Auth.GenerateToken(Auth.Signer, user)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
 
-	ctx.JSON(iris.Map{"token": token})
+	ctx.JSON(iris.Map{"token": string(token)})
 }
 
 func Logout(ctx iris.Context) {
 	Auth.Logout(ctx)
 }
 
-func Register() {
+func Register(ctx iris.Context) {
+	user := &Models.UserIns{}
+	err := ctx.ReadJSON(user)
 
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	user.InsertAt = time.Now().UTC()
+	user.UpdateAt = time.Now().UTC()
+
+	_, err = ConfigDb.DB.Collection("users").InsertOne(ctx, user)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusCreated)
+	ctx.JSON(iris.Map{"message": "User created successfully"})
 }

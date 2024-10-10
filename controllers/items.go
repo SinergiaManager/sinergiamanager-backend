@@ -81,7 +81,7 @@ func UpdateItem(ctx iris.Context) {
 
 	update[0].Value = setFields
 
-	_, err = Config.DB.Collection("items").UpdateByID(ctx, objectID, update)
+	_, err = ConfigDb.DB.Collection("items").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
