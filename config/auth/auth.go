@@ -2,6 +2,8 @@ package auth
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,10 +14,34 @@ import (
 )
 
 var (
-	secret   = []byte("signature_hmac_secret_shared_key")
-	Signer   = jwt.NewSigner(jwt.HS256, secret, 15*time.Minute)
-	Verifier = jwt.NewVerifier(jwt.HS256, secret).WithDefaultBlocklist()
+	secret            []byte
+	expirationMinutes = 15
+	Signer            *jwt.Signer
+	Verifier          *jwt.Verifier
 )
+
+func InitJWT() {
+	secret = []byte(os.Getenv("JWT_SECRET"))
+	if len(secret) == 0 {
+		fmt.Println("Warning: JWT_SECRET is not set. Using default secret.")
+		secret = []byte("default_secret")
+	}
+
+	expMinutesStr := os.Getenv("JWT_EXPIRES_IN_MINUTES")
+	if expMinutesStr != "" {
+		var err error
+		expirationMinutes, err = strconv.Atoi(expMinutesStr)
+		if err != nil || expirationMinutes <= 0 {
+			fmt.Println("Invalid JWT_EXPIRES_IN_MINUTES value, defaulting to 15 minutes.")
+			expirationMinutes = 15
+		}
+	}
+
+	Signer = jwt.NewSigner(jwt.HS256, secret, time.Minute*time.Duration(expirationMinutes))
+	Verifier = jwt.NewVerifier(jwt.HS256, secret).WithDefaultBlocklist()
+
+	fmt.Printf("JWT initialized with expiration: %d minutes\n", expirationMinutes)
+}
 
 type UserClaims struct {
 	Id       string `json:"id"`

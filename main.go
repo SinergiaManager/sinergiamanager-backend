@@ -18,6 +18,8 @@ func main() {
 	}
 	defer ConfigDb.DisconnectDb()
 
+	ConfigAuth.InitJWT()
+
 	app := iris.New()
 
 	user := app.Party("/users")
