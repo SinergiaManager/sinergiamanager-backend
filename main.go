@@ -3,18 +3,19 @@ package main
 import (
 	"log"
 
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	ConfigAuth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
+	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
 
 	"github.com/kataras/iris/v12"
 )
 
 func main() {
-	if err := Config.ConnectDb(); err != nil {
-		Config.DisconnectDb()
+	if err := ConfigDb.ConnectDb(); err != nil {
+		ConfigDb.DisconnectDb()
 		log.Fatalf("Error connecting to MongoDB: %v", err)
 	}
-	defer Config.DisconnectDb()
+	defer ConfigDb.DisconnectDb()
 
 	app := iris.New()
 
@@ -25,11 +26,20 @@ func main() {
 		user.Delete("/{id:string}", Controllers.DeleteUser)
 	}
 
+	user.Use(ConfigAuth.Protected)
+
 	item := app.Party("/item")
 	{
 		item.Get("/", Controllers.GetAllItems)
 		item.Post("/", Controllers.CreateItem)
 		item.Delete("/{id:string}", Controllers.DeleteItem)
+	}
+
+	auth := app.Party("/auth")
+	{
+		auth.Post("/login", Controllers.Login)
+		auth.Post("/logout", Controllers.Logout)
+		//auth.Post("/register", Controllers.Register)
 	}
 
 	app.Listen(":8080")

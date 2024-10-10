@@ -1,17 +1,18 @@
 package controllers
 
 import (
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	"time"
+
+	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func GetAllItems(ctx iris.Context) {
-	cursor, err := Config.DB.Collection("items").Find(ctx, bson.M{})
+	cursor, err := ConfigDb.DB.Collection("items").Find(ctx, bson.M{})
 
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -46,7 +47,7 @@ func CreateItem(ctx iris.Context) {
 	item.InsertAt = time.Now().UTC()
 	item.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("items").InsertOne(ctx, item)
+	_, err = ConfigDb.DB.Collection("items").InsertOne(ctx, item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -68,7 +69,7 @@ func DeleteItem(ctx iris.Context) {
 
 	filter := bson.M{"_id": objectID}
 
-	result, err := Config.DB.Collection("items").DeleteOne(ctx, filter)
+	result, err := ConfigDb.DB.Collection("items").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

@@ -3,7 +3,7 @@ package controllers
 import (
 	"time"
 
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
+	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 
 	"github.com/kataras/iris/v12"
@@ -12,7 +12,7 @@ import (
 )
 
 func GetAllUsers(ctx iris.Context) {
-	cursor, err := Config.DB.Collection("users").Find(ctx, bson.M{})
+	cursor, err := ConfigDb.DB.Collection("users").Find(ctx, bson.M{})
 
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -46,7 +46,7 @@ func CreateUser(ctx iris.Context) {
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
+	_, err = ConfigDb.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -66,7 +66,7 @@ func DeleteUser(ctx iris.Context) {
 		return
 	}
 	filter := bson.M{"_id": objectID}
-	result, err := Config.DB.Collection("users").DeleteOne(ctx, filter)
+	result, err := ConfigDb.DB.Collection("users").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
