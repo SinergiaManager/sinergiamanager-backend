@@ -244,3 +244,47 @@ func UpdateMe(ctx iris.Context) {
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": updatedUser})
 }
+
+func ChangePassword(ctx iris.Context) {
+	user := &Models.UserDb{}
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	oldPassword := ctx.PostValue("old_password")
+	newPassword := ctx.PostValue("new_password")
+
+	if user.Password != oldPassword {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid old password"})
+		return
+	}
+
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "password", Value: newPassword}}}}
+	_, err = Config.DB.Collection("users").UpdateByID(ctx, objID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "Password updated successfully"})
+}
