@@ -56,6 +56,7 @@ func main() {
 		auth.Post("/login", Controllers.Login)
 		auth.Post("/logout", Config.JWTMiddleware([]string{}), Controllers.Logout)
 		auth.Post("/register", Controllers.Register)
+		auth.Post("/refresh", Config.JWTMiddleware([]string{}), Controllers.RefreshToken)
 	}
 
 	app.Listen(":8080")

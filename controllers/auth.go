@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"strings"
 	"time"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(ctx iris.Context) {
@@ -27,7 +29,8 @@ func Login(ctx iris.Context) {
 		return
 	}
 
-	if user.Password != credentials.Password {
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
+	if err != nil {
 		ctx.StatusCode(iris.StatusUnauthorized)
 		ctx.JSON(iris.Map{"error": "Invalid credentials"})
 		return
@@ -79,6 +82,14 @@ func Register(ctx iris.Context) {
 	user.UpdateAt = time.Now().UTC()
 	user.Role = string(Config.EnumUserRole.USER)
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+	user.Password = string(hashedPassword)
+
 	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -88,4 +99,31 @@ func Register(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusCreated)
 	ctx.JSON(iris.Map{"message": "User created successfully"})
+}
+
+func RefreshToken(ctx iris.Context) {
+	tokenAuth := ctx.GetHeader("Authorization")
+	if tokenAuth == "" {
+		ctx.StatusCode(iris.StatusUnauthorized)
+		ctx.JSON(iris.Map{"error": "Not authenticated"})
+		return
+	}
+
+	tokenParts := strings.Split(tokenAuth, " ")
+	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		ctx.StatusCode(iris.StatusUnauthorized)
+		ctx.JSON(iris.Map{"error": "Invalid token format"})
+		return
+	}
+
+	token := tokenParts[1]
+
+	newToken, err := Config.RefreshToken(Config.Signer, []byte(token))
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(iris.Map{"token": string(newToken)})
 }

@@ -57,12 +57,35 @@ func GenerateToken(signer *jwt.Signer, user *Models.UserDb) ([]byte, error) {
 		Role:     string(EnumUserRole.USER),
 	}
 
+	if user.ID != claims.Id {
+		return nil, fmt.Errorf("user ID mismatch")
+	}
+
 	token, err := signer.Sign(claims)
 	if err != nil {
 		return nil, err
 	}
 
 	return token, nil
+}
+
+func RefreshToken(signer *jwt.Signer, token []byte) ([]byte, error) {
+	verifiedToken, err := Verifier.VerifyToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	var claims UserClaims
+	if err := verifiedToken.Claims(&claims); err != nil {
+		return nil, err
+	}
+
+	newToken, err := signer.Sign(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return newToken, nil
 }
 
 func Logout(ctx iris.Context) {
