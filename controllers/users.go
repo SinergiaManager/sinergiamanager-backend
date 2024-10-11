@@ -9,11 +9,25 @@ import (
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetAllUsers(ctx iris.Context) {
-	cursor, err := Config.DB.Collection("users").Find(ctx, bson.M{})
+	limit, err := ctx.URLParamInt("limit")
+	if err != nil || limit <= 0 {
+		limit = 10 // default limit
+	}
 
+	skip, err := ctx.URLParamInt("skip")
+	if err != nil || skip < 0 {
+		skip = 0 // default skip
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(skip))
+
+	cursor, err := Config.DB.Collection("users").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -32,7 +46,6 @@ func GetAllUsers(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": users})
-
 }
 
 func CreateUser(ctx iris.Context) {
@@ -40,7 +53,7 @@ func CreateUser(ctx iris.Context) {
 	err := ctx.ReadBody(&user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 	user.InsertAt = time.Now().UTC()
@@ -49,7 +62,7 @@ func CreateUser(ctx iris.Context) {
 	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
@@ -58,9 +71,15 @@ func CreateUser(ctx iris.Context) {
 }
 
 func UpdateUser(ctx iris.Context) {
-	var updateData map[string]interface{}
+	user := ctx.Values().Get("user").(Config.UserClaims)
 
 	id := ctx.Params().Get("id")
+	if user.Id != id && user.Role != "admin" {
+		ctx.StatusCode(iris.StatusForbidden)
+		ctx.JSON(iris.Map{"error": "You are not allowed to update this user"})
+		return
+	}
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -68,14 +87,17 @@ func UpdateUser(ctx iris.Context) {
 		return
 	}
 
-	err = ctx.ReadBody(&updateData)
+	var updateData = make(map[string]interface{})
+	updateData["update_at"] = time.Now().UTC()
 
-	update := bson.D{{"$set", bson.D{}}}
+	ctx.ReadBody(&updateData)
+
+	update := bson.D{{Key: "$set", Value: bson.D{}}}
 
 	setFields := bson.D{}
 
 	for key, value := range updateData {
-		setFields = append(setFields, bson.E{key, value})
+		setFields = append(setFields, bson.E{Key: key, Value: value})
 	}
 
 	update[0].Value = setFields
@@ -83,12 +105,20 @@ func UpdateUser(ctx iris.Context) {
 	_, err = Config.DB.Collection("users").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	updatedUser := &Model.UserOut{}
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objectID}).Decode(updatedUser)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
 	ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"message": "User updated successfully"})
+	ctx.JSON(iris.Map{"data": updatedUser})
 }
 
 func DeleteUser(ctx iris.Context) {
