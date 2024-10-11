@@ -5,7 +5,7 @@ import (
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
-	UserModel "github.com/SinergiaManager/sinergiamanager-backend/models"
+	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
@@ -21,7 +21,8 @@ func main() {
 	Config.InitJWT()
 
 	v := validator.New()
-	v.RegisterStructValidation(UserModel.UserStructLevelValidation, UserModel.UserIns{})
+	v.RegisterStructValidation(Models.UserStructLevelValidation, Models.UserIns{})
+	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 
 	app := iris.New()
 	app.Validator = v
@@ -31,9 +32,14 @@ func main() {
 		user.Get("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetAllUsers)
 		user.Get("/me", Config.JWTMiddleware([]string{}), Controllers.GetMe)
 		user.Get("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetUser)
+
 		user.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateUser)
-		user.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateUser)
+		user.Post("/change-password", Config.JWTMiddleware([]string{}), Controllers.ChangePassword)
+
 		user.Put("/me", Config.JWTMiddleware([]string{}), Controllers.UpdateMe)
+		user.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateUser)
+
+		user.Delete("/me", Config.JWTMiddleware([]string{}), Controllers.DeleteMe)
 		user.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteUser)
 	}
 
