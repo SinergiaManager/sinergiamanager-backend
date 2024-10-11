@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"time"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
@@ -149,7 +151,7 @@ func DeleteUser(ctx iris.Context) {
 }
 
 func GetMe(ctx iris.Context) {
-	user := &Models.UserOut{}
+	user := &Models.UserDb{}
 	Id := ctx.Values().Get("user").(Config.UserClaims).Id
 
 	objID, err := primitive.ObjectIDFromHex(Id)
@@ -243,4 +245,123 @@ func UpdateMe(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": updatedUser})
+}
+
+func DeleteMe(ctx iris.Context) {
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	filter := bson.M{"_id": objID}
+	result, err := Config.DB.Collection("users").DeleteOne(ctx, filter)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		ctx.StatusCode(iris.StatusNotFound)
+		ctx.JSON(iris.Map{"error": "User not found"})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "User deleted successfully"})
+}
+
+func ChangePassword(ctx iris.Context) {
+	user := &Models.UserDb{}
+
+	changePassword := &Models.UserChangePassword{}
+	err := ctx.ReadJSON(changePassword)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	fmt.Printf("Old password %s\n", changePassword.OldPassword)
+	fmt.Printf("New password %s\n", changePassword.NewPassword)
+	fmt.Printf("User password %s\n", user)
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(changePassword.OldPassword))
+	if err != nil {
+		ctx.StatusCode(iris.StatusUnauthorized)
+		ctx.JSON(iris.Map{"error": "Invalid old password"})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(changePassword.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "password", Value: string(hashedPassword)}}}}
+	_, err = Config.DB.Collection("users").UpdateByID(ctx, objID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "Password updated successfully"})
+}
+
+func ForgotPassword(ctx iris.Context) {
+	user := &Models.UserDb{}
+
+	forgotPassword := &Models.UserForgotPassword{}
+	err := ctx.ReadJSON(forgotPassword)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"email": forgotPassword.Email}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	// send email with password reset link
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "Password reset link sent to your email"})
 }
