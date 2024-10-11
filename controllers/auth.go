@@ -89,3 +89,21 @@ func Register(ctx iris.Context) {
 	ctx.StatusCode(iris.StatusCreated)
 	ctx.JSON(iris.Map{"message": "User created successfully"})
 }
+
+func RefreshToken(ctx iris.Context) {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		ctx.StatusCode(iris.StatusUnauthorized)
+		ctx.JSON(iris.Map{"error": "Not authenticated"})
+		return
+	}
+
+	newToken, err := Config.RefreshToken(Config.Signer, []byte(token))
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(iris.Map{"token": string(newToken)})
+}
