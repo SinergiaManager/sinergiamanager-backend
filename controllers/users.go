@@ -336,3 +336,32 @@ func ChangePassword(ctx iris.Context) {
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"message": "Password updated successfully"})
 }
+
+func ForgotPassword(ctx iris.Context) {
+	user := &Models.UserDb{}
+
+	forgotPassword := &Models.UserForgotPassword{}
+	err := ctx.ReadJSON(forgotPassword)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"email": forgotPassword.Email}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	// send email with password reset link
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"message": "Password reset link sent to your email"})
+}

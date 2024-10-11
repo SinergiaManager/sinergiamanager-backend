@@ -23,6 +23,7 @@ func main() {
 	v := validator.New()
 	v.RegisterStructValidation(Models.UserStructLevelValidation, Models.UserIns{})
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
+	v.RegisterStructValidation(Models.UserForgotPasswordStructLevelValidation, Models.UserForgotPassword{})
 
 	app := iris.New()
 	app.Validator = v
@@ -35,6 +36,7 @@ func main() {
 
 		user.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateUser)
 		user.Post("/change-password", Config.JWTMiddleware([]string{}), Controllers.ChangePassword)
+		user.Post("/forgot-password", Config.JWTMiddleware([]string{}), Controllers.ForgotPassword)
 
 		user.Put("/me", Config.JWTMiddleware([]string{}), Controllers.UpdateMe)
 		user.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateUser)

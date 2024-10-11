@@ -47,6 +47,10 @@ type UserChangePassword struct {
 	NewPassword string `json:"newPassword" bson:"newPassword" validate:"required"`
 }
 
+type UserForgotPassword struct {
+	Email string `json:"email" bson:"email" validate:"required"`
+}
+
 func UserStructLevelValidation(sl validator.StructLevel) {
 	user := sl.Current().Interface().(UserIns)
 
@@ -67,6 +71,16 @@ func UserChangePasswordStructLevelValidation(sl validator.StructLevel) {
 	/* input validation */
 	if ok, _, _, _ := verifyPassword(changePassword.NewPassword); !ok {
 		sl.ReportError(changePassword.NewPassword, "NewPassword", "NewPassword", "password", "")
+	}
+}
+
+func UserForgotPasswordStructLevelValidation(sl validator.StructLevel) {
+	forgotPassword := sl.Current().Interface().(UserForgotPassword)
+
+	/* input validation */
+	match := `^[\w\-\.\d]+@[\w\-\.\d]+\.[\w\-\.\d]+$`
+	if ok, _ := regexp.MatchString(match, forgotPassword.Email); !ok {
+		sl.ReportError(forgotPassword.Email, "Email", "Email", "email", "")
 	}
 }
 
