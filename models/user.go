@@ -1,12 +1,10 @@
 package models
 
 import (
-	"time"
-
 	"regexp"
+	"time"
 	"unicode"
 
-	Enum "github.com/SinergiaManager/sinergiamanager-backend/config/utils"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -23,14 +21,14 @@ type UserDb struct {
 }
 
 type UserIns struct {
-	Username string        `json:"username" bson:"username" validate:"required"`
-	Name     string        `json:"name" bson:"name" validate:"required"`
-	Surname  string        `json:"surname" bson:"surname" validate:"required"`
-	Email    string        `json:"email" bson:"email" validate:"required"`
-	Password string        `json:"password" bson:"password" validate:"required"`
-	Role     Enum.UserRole `json:"role" bson:"role"`
-	InsertAt time.Time     `json:"insertAt" bson:"insert_at"`
-	UpdateAt time.Time     `json:"updateAt" bson:"update_at"`
+	Username string    `json:"username" bson:"username" validate:"required"`
+	Name     string    `json:"name" bson:"name" validate:"required"`
+	Surname  string    `json:"surname" bson:"surname" validate:"required"`
+	Email    string    `json:"email" bson:"email" validate:"required"`
+	Password string    `json:"password" bson:"password" validate:"required"`
+	Role     string    `json:"role" bson:"role"`
+	InsertAt time.Time `json:"insertAt" bson:"insert_at"`
+	UpdateAt time.Time `json:"updateAt" bson:"update_at"`
 }
 
 type UserOut struct {

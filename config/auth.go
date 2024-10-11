@@ -1,4 +1,4 @@
-package auth
+package config
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	Enum "github.com/SinergiaManager/sinergiamanager-backend/config/utils"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/middleware/jwt"
@@ -55,7 +54,7 @@ func GenerateToken(signer *jwt.Signer, user *Models.UserDb) ([]byte, error) {
 		Id:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
-		Role:     string(Enum.EnumUserRole.ADMIN),
+		Role:     string(EnumUserRole.USER),
 	}
 
 	token, err := signer.Sign(claims)

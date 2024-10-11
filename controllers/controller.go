@@ -3,9 +3,7 @@ package controllers
 import (
 	"time"
 
-	Auth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
-	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
-	"github.com/SinergiaManager/sinergiamanager-backend/config/utils"
+	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
@@ -22,7 +20,7 @@ func Login(ctx iris.Context) {
 	}
 
 	user := &Models.UserDb{}
-	err = ConfigDb.DB.Collection("users").FindOne(ctx, bson.M{"email": credentials.Email}).Decode(user)
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"email": credentials.Email}).Decode(user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusUnauthorized)
 		ctx.JSON(iris.Map{"error": "Invalid credentials"})
@@ -35,7 +33,7 @@ func Login(ctx iris.Context) {
 		return
 	}
 
-	token, err := Auth.GenerateToken(Auth.Signer, user)
+	token, err := Config.GenerateToken(Config.Signer, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -46,7 +44,7 @@ func Login(ctx iris.Context) {
 }
 
 func Logout(ctx iris.Context) {
-	Auth.Logout(ctx)
+	Config.Logout(ctx)
 }
 
 func Register(ctx iris.Context) {
@@ -65,7 +63,7 @@ func Register(ctx iris.Context) {
 	}
 
 	var count int64 = 0
-	count, err = ConfigDb.DB.Collection("users").CountDocuments(ctx, bson.M{"$or": []bson.M{{"email": user.Email}, {"username": user.Username}}})
+	count, err = Config.DB.Collection("users").CountDocuments(ctx, bson.M{"$or": []bson.M{{"email": user.Email}, {"username": user.Username}}})
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -79,9 +77,9 @@ func Register(ctx iris.Context) {
 
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
-	user.Role = utils.EnumUserRole.USER
+	user.Role = string(Config.EnumUserRole.USER)
 
-	_, err = ConfigDb.DB.Collection("users").InsertOne(ctx, user)
+	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

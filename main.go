@@ -3,9 +3,7 @@ package main
 import (
 	"log"
 
-	ConfigAuth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
-	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
-	Enum "github.com/SinergiaManager/sinergiamanager-backend/config/utils"
+	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
 	UserModel "github.com/SinergiaManager/sinergiamanager-backend/models"
 
@@ -14,13 +12,13 @@ import (
 )
 
 func main() {
-	if err := ConfigDb.ConnectDb(); err != nil {
-		ConfigDb.DisconnectDb()
+	if err := Config.ConnectDb(); err != nil {
+		Config.DisconnectDb()
 		log.Fatalf("Error connecting to MongoDB: %v", err)
 	}
-	defer ConfigDb.DisconnectDb()
+	defer Config.DisconnectDb()
 
-	ConfigAuth.InitJWT()
+	Config.InitJWT()
 
 	v := validator.New()
 	v.RegisterStructValidation(UserModel.UserStructLevelValidation, UserModel.UserIns{})
@@ -30,10 +28,10 @@ func main() {
 
 	user := app.Party("/users")
 	{
-		user.Get("/", ConfigAuth.JWTMiddleware([]string{string(Enum.EnumUserRole.ADMIN)}), Controllers.GetAllUsers)
-		user.Post("/", ConfigAuth.JWTMiddleware([]string{string(Enum.EnumUserRole.ADMIN)}), Controllers.CreateUser)
-		user.Put("/{id:string}", ConfigAuth.JWTMiddleware([]string{}), Controllers.UpdateUser)
-		user.Delete("/{id:string}", ConfigAuth.JWTMiddleware([]string{}), Controllers.DeleteUser)
+		user.Get("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetAllUsers)
+		user.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateUser)
+		user.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateUser)
+		user.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteUser)
 	}
 
 	item := app.Party("/items")
@@ -47,7 +45,7 @@ func main() {
 	auth := app.Party("/auth")
 	{
 		auth.Post("/login", Controllers.Login)
-		auth.Post("/logout", ConfigAuth.JWTMiddleware([]string{}), Controllers.Logout)
+		auth.Post("/logout", Config.JWTMiddleware([]string{}), Controllers.Logout)
 		auth.Post("/register", Controllers.Register)
 	}
 

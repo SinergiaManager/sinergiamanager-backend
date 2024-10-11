@@ -3,8 +3,7 @@ package controllers
 import (
 	"time"
 
-	ConfigAuth "github.com/SinergiaManager/sinergiamanager-backend/config/auth"
-	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
+	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 
 	"github.com/kataras/iris/v12"
@@ -28,7 +27,7 @@ func GetAllUsers(ctx iris.Context) {
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(skip))
 
-	cursor, err := ConfigDb.DB.Collection("users").Find(ctx, bson.M{}, findOptions)
+	cursor, err := Config.DB.Collection("users").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -60,7 +59,7 @@ func CreateUser(ctx iris.Context) {
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
 
-	_, err = ConfigDb.DB.Collection("users").InsertOne(ctx, user)
+	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -72,7 +71,7 @@ func CreateUser(ctx iris.Context) {
 }
 
 func UpdateUser(ctx iris.Context) {
-	user := ctx.Values().Get("user").(ConfigAuth.UserClaims)
+	user := ctx.Values().Get("user").(Config.UserClaims)
 
 	id := ctx.Params().Get("id")
 	if user.Id != id && user.Role != "admin" {
@@ -91,19 +90,19 @@ func UpdateUser(ctx iris.Context) {
 	var updateData = make(map[string]interface{})
 	updateData["update_at"] = time.Now().UTC()
 
-	err = ctx.ReadBody(&updateData)
+	ctx.ReadBody(&updateData)
 
 	update := bson.D{{Key: "$set", Value: bson.D{}}}
 
 	setFields := bson.D{}
 
 	for key, value := range updateData {
-		setFields = append(setFields, bson.E{key, value})
+		setFields = append(setFields, bson.E{Key: key, Value: value})
 	}
 
 	update[0].Value = setFields
 
-	_, err = ConfigDb.DB.Collection("users").UpdateByID(ctx, objectID, update)
+	_, err = Config.DB.Collection("users").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -111,7 +110,7 @@ func UpdateUser(ctx iris.Context) {
 	}
 
 	updatedUser := &Model.UserOut{}
-	err = ConfigDb.DB.Collection("users").FindOne(ctx, bson.M{"_id": objectID}).Decode(updatedUser)
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objectID}).Decode(updatedUser)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
@@ -131,7 +130,7 @@ func DeleteUser(ctx iris.Context) {
 		return
 	}
 	filter := bson.M{"_id": objectID}
-	result, err := ConfigDb.DB.Collection("users").DeleteOne(ctx, filter)
+	result, err := Config.DB.Collection("users").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

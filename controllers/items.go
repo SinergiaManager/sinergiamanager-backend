@@ -3,7 +3,7 @@ package controllers
 import (
 	"time"
 
-	ConfigDb "github.com/SinergiaManager/sinergiamanager-backend/config/database"
+	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,7 +27,7 @@ func GetAllItems(ctx iris.Context) {
 	findOptions.SetLimit(int64(limit))
 	findOptions.SetSkip(int64(skip))
 
-	cursor, err := ConfigDb.DB.Collection("items").Find(ctx, bson.M{}, findOptions)
+	cursor, err := Config.DB.Collection("items").Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -60,7 +60,7 @@ func CreateItem(ctx iris.Context) {
 	item.InsertAt = time.Now().UTC()
 	item.UpdateAt = time.Now().UTC()
 
-	_, err = ConfigDb.DB.Collection("items").InsertOne(ctx, item)
+	_, err = Config.DB.Collection("items").InsertOne(ctx, item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -89,21 +89,21 @@ func UpdateItem(ctx iris.Context) {
 	setFields := bson.D{}
 
 	for key, value := range updateData {
-		setFields = append(setFields, bson.E{key, value})
+		setFields = append(setFields, bson.E{Key: key, Value: value})
 	}
 
 	update[0].Value = setFields
 
 	updateData["update_at"] = time.Now().UTC()
 
-	_, err = ConfigDb.DB.Collection("items").UpdateByID(ctx, objectID, update)
+	_, err = Config.DB.Collection("items").UpdateByID(ctx, objectID, update)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"message": err.Error()})
 		return
 	}
 
-	updatedData := ConfigDb.DB.Collection("items").FindOne(ctx, bson.M{"_id": objectID})
+	updatedData := Config.DB.Collection("items").FindOne(ctx, bson.M{"_id": objectID})
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": updatedData})
@@ -120,7 +120,7 @@ func DeleteItem(ctx iris.Context) {
 
 	filter := bson.M{"_id": objectID}
 
-	result, err := ConfigDb.DB.Collection("items").DeleteOne(ctx, filter)
+	result, err := Config.DB.Collection("items").DeleteOne(ctx, filter)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
