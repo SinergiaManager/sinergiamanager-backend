@@ -29,8 +29,11 @@ func main() {
 	user := app.Party("/users")
 	{
 		user.Get("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetAllUsers)
+		user.Get("/me", Config.JWTMiddleware([]string{}), Controllers.GetMe)
+		user.Get("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetUser)
 		user.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateUser)
-		user.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateUser)
+		user.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateUser)
+		user.Put("/me", Config.JWTMiddleware([]string{}), Controllers.UpdateMe)
 		user.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteUser)
 	}
 

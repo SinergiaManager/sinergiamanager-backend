@@ -4,11 +4,12 @@ import (
 	"time"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
-	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
+	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -36,7 +37,7 @@ func GetAllUsers(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var users []*Model.UserOut
+	var users []*Models.UserOut
 
 	if err = cursor.All(ctx, &users); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -49,7 +50,7 @@ func GetAllUsers(ctx iris.Context) {
 }
 
 func CreateUser(ctx iris.Context) {
-	var user *Model.UserIns
+	var user *Models.UserIns
 	err := ctx.ReadBody(&user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -109,7 +110,7 @@ func UpdateUser(ctx iris.Context) {
 		return
 	}
 
-	updatedUser := &Model.UserOut{}
+	updatedUser := &Models.UserOut{}
 	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objectID}).Decode(updatedUser)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -145,4 +146,101 @@ func DeleteUser(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"message": "User deleted successfully"})
+}
+
+func GetMe(ctx iris.Context) {
+	user := &Models.UserOut{}
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	ctx.JSON(user)
+}
+
+func GetUser(ctx iris.Context) {
+	user := &Models.UserOut{}
+	Id := ctx.Params().Get("id")
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.StatusCode(iris.StatusNotFound)
+			ctx.JSON(iris.Map{"error": "User not found"})
+		} else {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": "Failed to fetch user"})
+		}
+		return
+	}
+
+	ctx.JSON(user)
+}
+
+func UpdateMe(ctx iris.Context) {
+	updateData := make(map[string]interface{})
+
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	ctx.ReadBody(&updateData)
+
+	update := bson.D{{Key: "$set", Value: bson.D{}}}
+
+	setFields := bson.D{}
+
+	for key, value := range updateData {
+		setFields = append(setFields, bson.E{Key: key, Value: value})
+	}
+
+	update[0].Value = setFields
+
+	updateData["update_at"] = time.Now().UTC()
+
+	_, err = Config.DB.Collection("users").UpdateByID(ctx, objID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	updatedUser := &Models.UserOut{}
+	err = Config.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(updatedUser)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"message": err.Error()})
+		return
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"data": updatedUser})
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
-	Model "github.com/SinergiaManager/sinergiamanager-backend/models"
+	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -36,7 +36,7 @@ func GetAllItems(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var items []*Model.ItemDB
+	var items []*Models.ItemDB
 
 	if err = cursor.All(ctx, &items); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -49,7 +49,7 @@ func GetAllItems(ctx iris.Context) {
 }
 
 func CreateItem(ctx iris.Context) {
-	var item *Model.ItemIns
+	var item *Models.ItemIns
 	err := ctx.ReadJSON(&item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -82,7 +82,7 @@ func UpdateItem(ctx iris.Context) {
 		return
 	}
 
-	err = ctx.ReadBody(&updateData)
+	ctx.ReadBody(&updateData)
 
 	update := bson.D{{Key: "$set", Value: bson.D{}}}
 
