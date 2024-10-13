@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type ItemDB struct {
+type ItemDb struct {
 	ID          string    `bson:"_id"`
 	Name        string    `bson:"name"`
 	Code        string    `bson:"code"`

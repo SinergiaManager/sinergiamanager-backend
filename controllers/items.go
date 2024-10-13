@@ -36,7 +36,7 @@ func GetAllItems(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var items []*Models.ItemDB
+	var items []*Models.ItemDb
 
 	if err = cursor.All(ctx, &items); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
