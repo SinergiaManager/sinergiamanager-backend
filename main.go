@@ -6,6 +6,7 @@ import (
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
+	Services "github.com/SinergiaManager/sinergiamanager-backend/services"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
@@ -60,6 +61,8 @@ func main() {
 		auth.Post("/register", Controllers.Register)
 		auth.Post("/refresh", Config.JWTMiddleware([]string{}), Controllers.RefreshToken)
 	}
+
+	go Services.SetupJobScheduler()
 
 	app.Listen(":8080")
 }

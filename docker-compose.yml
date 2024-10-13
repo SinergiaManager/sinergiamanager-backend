@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  go-server:
+    restart: always
+    image: golang:latest
+    container_name: go-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/go/src/app
+    working_dir: /go/src/app
+    env_file:
+      - .env
+    command: go run main.go
+    depends_on:
+      - mongo
+      - mailserver
+
+  mongo:
+    restart: always
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mailserver:
+    restart: always
+    image: mailhog/mailhog:latest
+    container_name: mailserver
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  mongo-data:
