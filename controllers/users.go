@@ -151,7 +151,7 @@ func DeleteUser(ctx iris.Context) {
 }
 
 func GetMe(ctx iris.Context) {
-	user := &Models.UserDb{}
+	user := &Models.UserOut{}
 	Id := ctx.Values().Get("user").(Config.UserClaims).Id
 
 	objID, err := primitive.ObjectIDFromHex(Id)
