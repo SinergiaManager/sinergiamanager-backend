@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
@@ -62,7 +63,22 @@ func main() {
 		auth.Post("/refresh", Config.JWTMiddleware([]string{}), Controllers.RefreshToken)
 	}
 
-	go Services.SetupJobScheduler()
+	notification := app.Party("/notifications")
+	{
+		notification.Get("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetAllNotifications)
+		notification.Get("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetNotification)
+		notification.Get("/user/{userID:string}", Config.JWTMiddleware([]string{}), Controllers.GetNotificationsByUser)
+		notification.Get("/me", Config.JWTMiddleware([]string{}), Controllers.GetNotificationsMe)
+		notification.Get("/me/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetNotificationMe)
+
+		notification.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateNotification)
+
+		notification.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateNotification)
+
+		notification.Delete("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.DeleteNotification)
+	}
+
+	go Services.SetupJobScheduler(context.TODO())
 
 	app.Listen(":8080")
 }
