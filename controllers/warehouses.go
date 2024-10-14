@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetAllWarehouses(ctx iris.Context) {
@@ -23,11 +22,17 @@ func GetAllWarehouses(ctx iris.Context) {
 		skip = 0
 	}
 
-	findOptions := options.Find()
-	findOptions.SetLimit(int64(limit))
-	findOptions.SetSkip(int64(skip))
+	pipeline := mongo.Pipeline{
+		{{"$lookup", bson.D{
+			{"from", "items"},
+			{"localField", "items.item_id"},
+			{"foreignField", "_id"},
+			{"as", "itemsDetails"},
+		}},
+			{"$skip", skip},
+			{"$limit", limit}}}
 
-	cursor, err := Config.DB.Collection("warehouses").Find(ctx, bson.M{}, findOptions)
+	cursor, err := Config.DB.Collection("warehouses").Aggregate(ctx, pipeline)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -36,7 +41,7 @@ func GetAllWarehouses(ctx iris.Context) {
 
 	defer cursor.Close(ctx)
 
-	var warehouses []*Models.WarehouseDb
+	var warehouses []*bson.M
 	if err = cursor.All(ctx, &warehouses); err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -49,34 +54,48 @@ func GetAllWarehouses(ctx iris.Context) {
 }
 
 func GetWarehouseById(ctx iris.Context) {
-	warehouse := &Models.WarehouseDb{}
 	id := ctx.Params().Get("id")
 
-	objID, err := primitive.ObjectIDFromHex(id)
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
 
-	err = Config.DB.Collection("warehouses").FindOne(ctx, bson.M{"_id": objID}).Decode(warehouse)
+	pipeline := mongo.Pipeline{
+		{{"$match", bson.D{{"_id", objectID}}}},
+		{{"$lookup", bson.D{
+			{"from", "items"},
+			{"localField", "items.item_id"},
+			{"foreignField", "_id"},
+			{"as", "itemsDetails"},
+		}}}}
+
+	var warehouse *bson.M
+
+	cursor, err := Config.DB.Collection("warehouses").Aggregate(ctx, pipeline)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			ctx.StatusCode(iris.StatusNotFound)
-			ctx.JSON(iris.Map{"error": "Warehouse not found"})
-			return
-		} else {
-			ctx.StatusCode(iris.StatusInternalServerError)
-			ctx.JSON(iris.Map{"error": "Faled to fect warehouse"})
-		}
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
 		return
+	}
+
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		if err = cursor.Decode(&warehouse); err != nil {
+			ctx.StatusCode(iris.StatusInternalServerError)
+			ctx.JSON(iris.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	ctx.JSON(iris.Map{"data": warehouse})
 }
 
 func CreateWarehouse(ctx iris.Context) {
-	var warehouse *Models.WarehouseIn
+	var warehouse *Models.WarehouseIns
 	err := ctx.ReadBody(&warehouse)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
@@ -98,7 +117,7 @@ func CreateWarehouse(ctx iris.Context) {
 
 }
 
-func DeleteWarehouse(ctx iris.Context){
+func DeleteWarehouse(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {

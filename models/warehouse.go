@@ -17,10 +17,10 @@ type WarehouseDb struct {
 	InsertAt time.Time       `bson:"insert_at"`
 }
 
-type WarehouseIn struct {
+type WarehouseIns struct {
 	Name     string          `json:"name" validate:"required"`
 	Location string          `json:"location" validate:"required"`
-	Code     string          `json:"code" validate:"required"`
+	Code     string          `json:"code" `
 	Items    []ItemWarehouse `json:"items"`
 	UpdateAt time.Time       `json:"update_at"`
 	InsertAt time.Time       `json:"insert_at"`
