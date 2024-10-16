@@ -6,6 +6,8 @@ import (
 	"log"
 	"time"
 
+	gomail "gopkg.in/gomail.v2"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
@@ -36,6 +38,21 @@ func SendScheduledNotifications(ctx context.Context) {
 
 			fmt.Printf("Inviando notifica a: %v\n", notification["email"])
 
+			message := gomail.NewMessage()
+
+			message.SetHeader("From", "support@singergiamanager.com")
+			message.SetHeader("To", notification["email"].(string))
+			message.SetHeader("Subject", "Notifica da SinergiaManager - "+notification["title"].(string))
+
+			message.SetBody("text/html", fmt.Sprintf("<h1>%v</h1><p>%v</p>", notification["title"], notification["message"]))
+
+			dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
+
+			if err := dialer.DialAndSend(message); err != nil {
+				fmt.Println("Error:", err)
+				panic(err)
+			}
+
 			update := bson.M{"$set": bson.M{"isDelivered": true, "deliveredAt": time.Now()}}
 			_, err = Config.DB.Collection("notifications").UpdateOne(ctx, bson.M{"_id": notification["_id"]}, update)
 			if err != nil {
@@ -50,4 +67,28 @@ func SendScheduledNotifications(ctx context.Context) {
 			log.Println("Cursor error:", err)
 		}
 	}()
+}
+
+func TestEmail() {
+	notification := map[string]interface{}{
+		"email":   "fabio04musitelli@gmail.com",
+		"title":   "Test Notification",
+		"message": "This is a test message from SinergiaManager.",
+	}
+
+	message := gomail.NewMessage()
+	message.SetHeader("From", "support@singergiamanager.com")
+	message.SetHeader("To", notification["email"].(string))
+	message.SetHeader("Subject", "Notifica da SinergiaManager - "+notification["title"].(string))
+	message.SetBody("text/html", fmt.Sprintf("<h1>%v</h1><p>%v</p>", notification["title"], notification["message"]))
+
+	dialer := gomail.NewDialer("mailserver", 1025, "", "") // No username/password for MailHog
+
+	if err := dialer.DialAndSend(message); err != nil {
+		fmt.Println("Error:", err)
+		panic(err)
+	} else {
+		fmt.Println("Email sent successfully!")
+	}
+
 }
