@@ -55,6 +55,15 @@ func main() {
 		item.Delete("/{id:string}", Controllers.DeleteItem)
 	}
 
+	warehouse := app.Party("/warehouses")
+	{
+		warehouse.Get("/", Controllers.GetAllWarehouses)
+		warehouse.Get("/{id:string}", Controllers.GetWarehouseById)
+		warehouse.Post("/", Controllers.CreateWarehouse)
+		warehouse.Put("/{id:string}", Controllers.UpdateWarehouse)
+		warehouse.Delete("/{id:string}", Controllers.DeleteWarehouse)
+	}
+
 	auth := app.Party("/auth")
 	{
 		auth.Post("/login", Controllers.Login)
