@@ -117,6 +117,45 @@ func CreateWarehouse(ctx iris.Context) {
 
 }
 
+func UpdateWarehouse(ctx iris.Context) {
+	var updateData = make(map[string]interface{})
+
+	id := ctx.Params().Get("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid warehouse ID format"})
+		return
+	}
+
+	ctx.ReadBody(&updateData)
+
+	update := bson.D{{Key: "$set", Value: bson.D{}}}
+
+	setFields := bson.D{}
+
+	for key, value := range updateData {
+		setFields = append(setFields, bson.E{Key: key, Value: value})
+	}
+
+	update[0].Value = setFields
+
+	updateData["updateAt"] = time.Now().UTC()
+
+	_, err = Config.DB.Collection("warehouses").UpdateOne(ctx, objectID, update)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+
+	updatedData := Config.DB.Collection("warehouses").FindOne(ctx, bson.M{"_id": objectID})
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"data": updatedData})
+
+}
+
 func DeleteWarehouse(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)

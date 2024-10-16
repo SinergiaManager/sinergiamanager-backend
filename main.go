@@ -60,6 +60,7 @@ func main() {
 		warehouse.Get("/", Controllers.GetAllWarehouses)
 		warehouse.Get("/{id:string}", Controllers.GetWarehouseById)
 		warehouse.Post("/", Controllers.CreateWarehouse)
+		warehouse.Put("/{id:string}", Controllers.UpdateWarehouse)
 		warehouse.Delete("/{id:string}", Controllers.DeleteWarehouse)
 	}
 
