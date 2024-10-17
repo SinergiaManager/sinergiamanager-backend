@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/go-playground/validator/v10"
+)
 
 type ItemWarehouse struct {
 	ItemDb   string `bson:"item_id"`
@@ -24,4 +28,12 @@ type WarehouseIns struct {
 	Items    []ItemWarehouse `json:"items"`
 	UpdateAt time.Time       `json:"update_at"`
 	InsertAt time.Time       `json:"insert_at"`
+}
+
+func WarehouseStructLevelValidation(wl validator.StructLevel) {
+	warehouse := wl.Current().Interface().(WarehouseIns)
+
+	if len(warehouse.Name) > 3 {
+		wl.ReportError(warehouse.Name, "Name", "Name", "name", "")
+	}
 }
