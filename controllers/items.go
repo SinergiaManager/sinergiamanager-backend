@@ -49,9 +49,8 @@ func GetAllItems(ctx iris.Context) {
 }
 
 func CreateItem(ctx iris.Context) {
-	var item *Models.ItemIns
-	err := ctx.ReadBody(&item)
-	if err != nil {
+	item := &Models.ItemIns{}
+	if err := ctx.ReadJSON(&item); err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
@@ -60,7 +59,7 @@ func CreateItem(ctx iris.Context) {
 	item.InsertAt = time.Now().UTC()
 	item.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("items").InsertOne(ctx, item)
+	_, err := Config.DB.Collection("items").InsertOne(ctx, item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
