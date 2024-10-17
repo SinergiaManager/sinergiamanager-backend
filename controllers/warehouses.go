@@ -23,14 +23,14 @@ func GetAllWarehouses(ctx iris.Context) {
 	}
 
 	pipeline := mongo.Pipeline{
-		{{"$lookup", bson.D{
-			{"from", "items"},
-			{"localField", "items.item_id"},
-			{"foreignField", "_id"},
-			{"as", "itemsDetails"},
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "items"},
+			{Key: "localField", Value: "items.item_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "itemsDetails"},
 		}},
-			{"$skip", skip},
-			{"$limit", limit}}}
+			{Key: "$skip", Value: skip},
+			{Key: "$limit", Value: limit}}}
 
 	cursor, err := Config.DB.Collection("warehouses").Aggregate(ctx, pipeline)
 	if err != nil {
@@ -64,12 +64,12 @@ func GetWarehouseById(ctx iris.Context) {
 	}
 
 	pipeline := mongo.Pipeline{
-		{{"$match", bson.D{{"_id", objectID}}}},
-		{{"$lookup", bson.D{
-			{"from", "items"},
-			{"localField", "items.item_id"},
-			{"foreignField", "_id"},
-			{"as", "itemsDetails"},
+		{{Key: "$match", Value: bson.D{{Key: "_id", Value: objectID}}}},
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "items"},
+			{Key: "localField", Value: "items.item_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "itemsDetails"},
 		}}}}
 
 	var warehouse *bson.M
