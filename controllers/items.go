@@ -50,7 +50,7 @@ func GetAllItems(ctx iris.Context) {
 
 func CreateItem(ctx iris.Context) {
 	var item *Models.ItemIns
-	err := ctx.ReadJSON(&item)
+	err := ctx.ReadBody(&item)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
