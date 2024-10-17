@@ -27,6 +27,7 @@ func main() {
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 	v.RegisterStructValidation(Models.UserForgotPasswordStructLevelValidation, Models.UserForgotPassword{})
 	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
+	v.RegisterStructValidation(Models.ClientStructLevelValidation, Models.ClientIns{})
 
 	app := iris.New()
 	app.Validator = v
@@ -95,6 +96,15 @@ func main() {
 		supplier.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreateSupplier)
 		supplier.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateSupplier)
 		supplier.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteSupplier)
+	}
+
+	client := app.Party("/clients")
+	{
+		client.Get("/", Config.JWTMiddleware([]string{}), Controllers.GetAllClients)
+		client.Get("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetClient)
+		client.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreateClient)
+		client.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateClient)
+		client.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteClient)
 	}
 
 	go Services.SetupJobScheduler(context.TODO())
