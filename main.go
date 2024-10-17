@@ -26,6 +26,7 @@ func main() {
 	v.RegisterStructValidation(Models.UserStructLevelValidation, Models.UserIns{})
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 	v.RegisterStructValidation(Models.UserForgotPasswordStructLevelValidation, Models.UserForgotPassword{})
+	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
 
 	app := iris.New()
 	app.Validator = v
@@ -85,6 +86,15 @@ func main() {
 		notification.Put("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.UpdateNotification)
 
 		notification.Delete("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.DeleteNotification)
+	}
+
+	supplier := app.Party("/suppliers")
+	{
+		supplier.Get("/", Config.JWTMiddleware([]string{}), Controllers.GetAllSuppliers)
+		supplier.Get("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetSupplier)
+		supplier.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreateSupplier)
+		supplier.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateSupplier)
+		supplier.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteSupplier)
 	}
 
 	go Services.SetupJobScheduler(context.TODO())
