@@ -82,7 +82,7 @@ func TestEmail() {
 	message.SetHeader("Subject", "Notifica da SinergiaManager - "+notification["title"].(string))
 	message.SetBody("text/html", fmt.Sprintf("<h1>%v</h1><p>%v</p>", notification["title"], notification["message"]))
 
-	dialer := gomail.NewDialer("mailserver", 1025, "", "") // No username/password for MailHog
+	dialer := gomail.NewDialer("mailserverTest", 1025, "", "") // No username/password for MailHog
 
 	if err := dialer.DialAndSend(message); err != nil {
 		fmt.Println("Error:", err)

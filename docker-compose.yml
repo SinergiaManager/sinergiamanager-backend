@@ -26,10 +26,10 @@ services:
     volumes:
       - mongo-data:/data/db
 
-  mailserver:
+  mailserverTest:
     restart: always
     image: mailhog/mailhog:latest
-    container_name: mailserver
+    container_name: mailserverTest
     ports:
       - "1025:1025"
       - "8025:8025"
