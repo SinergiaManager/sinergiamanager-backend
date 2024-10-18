@@ -46,8 +46,7 @@ func SendScheduledNotifications(ctx context.Context) {
 
 			message.SetBody("text/html", fmt.Sprintf("<h1>%v</h1><p>%v</p>", notification["title"], notification["message"]))
 
-			dialer := gomail.NewDialer("live.smtp.mailtrap.io", 587, "api", "1a2b3c4d5e6f7g")
-
+			dialer := gomail.NewDialer("mailserver", 2500, "", "") // No username/password for now..
 			if err := dialer.DialAndSend(message); err != nil {
 				fmt.Println("Error:", err)
 				panic(err)
