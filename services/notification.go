@@ -49,7 +49,6 @@ func SendScheduledNotifications(ctx context.Context) {
 			dialer := gomail.NewDialer("mailserver", 2500, "", "") // No username/password for now..
 			if err := dialer.DialAndSend(message); err != nil {
 				fmt.Println("Error:", err)
-				panic(err)
 			}
 
 			update := bson.M{"$set": bson.M{"isDelivered": true, "deliveredAt": time.Now()}}
@@ -85,9 +84,7 @@ func TestEmail() {
 
 	if err := dialer.DialAndSend(message); err != nil {
 		fmt.Println("Error:", err)
-		panic(err)
 	} else {
 		fmt.Println("Email sent successfully!")
 	}
-
 }
