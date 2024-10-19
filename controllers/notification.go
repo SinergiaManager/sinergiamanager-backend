@@ -171,7 +171,7 @@ func GetNotificationMe(ctx iris.Context) {
 }
 
 func CreateNotification(ctx iris.Context) {
-	var notification Models.NotificationDb
+	var notification Models.NotificationIns
 	if err := ctx.ReadJSON(&notification); err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
@@ -181,7 +181,6 @@ func CreateNotification(ctx iris.Context) {
 	notification.InsertAt = time.Now().UTC()
 	notification.UpdateAt = time.Now().UTC()
 
-	/* if notification types has email wait to set delivered */
 	isDelivered := true
 	for _, t := range notification.Types {
 		if t == string(Config.EnumNotificationType.EMAIL) {
@@ -209,7 +208,7 @@ func CreateNotification(ctx iris.Context) {
 func UpdateNotification(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 
-	var notification Models.NotificationDb
+	var notification Models.NotificationIns
 	if err := ctx.ReadJSON(&notification); err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
