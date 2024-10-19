@@ -1,7 +1,6 @@
 package models
 
 import (
-	"regexp"
 	"time"
 	"unicode"
 
@@ -24,7 +23,7 @@ type UserIns struct {
 	Username string    `json:"username" bson:"username" validate:"required"`
 	Name     string    `json:"name" bson:"name" validate:"required"`
 	Surname  string    `json:"surname" bson:"surname" validate:"required"`
-	Email    string    `json:"email" bson:"email" validate:"required"`
+	Email    string    `json:"email" bson:"email" validate:"required,email"`
 	Password string    `json:"password" bson:"password" validate:"required"`
 	Role     string    `json:"role" bson:"role"`
 	InsertAt time.Time `json:"insertAt" bson:"insert_at"`
@@ -48,21 +47,7 @@ type UserChangePassword struct {
 }
 
 type UserForgotPassword struct {
-	Email string `json:"email" bson:"email" validate:"required"`
-}
-
-func UserStructLevelValidation(sl validator.StructLevel) {
-	user := sl.Current().Interface().(UserIns)
-
-	/* input validation */
-	if ok, _, _, _ := verifyPassword(user.Password); !ok {
-		sl.ReportError(user.Password, "Password", "Password", "password", "")
-	}
-
-	match := `^[\w\-\.\d]+@[\w\-\.\d]+\.[\w\-\.\d]+$`
-	if ok, _ := regexp.MatchString(match, user.Email); !ok {
-		sl.ReportError(user.Email, "Email", "Email", "email", "")
-	}
+	Email string `json:"email" bson:"email" validate:"required,email"`
 }
 
 func UserChangePasswordStructLevelValidation(sl validator.StructLevel) {
@@ -71,16 +56,6 @@ func UserChangePasswordStructLevelValidation(sl validator.StructLevel) {
 	/* input validation */
 	if ok, _, _, _ := verifyPassword(changePassword.NewPassword); !ok {
 		sl.ReportError(changePassword.NewPassword, "NewPassword", "NewPassword", "password", "")
-	}
-}
-
-func UserForgotPasswordStructLevelValidation(sl validator.StructLevel) {
-	forgotPassword := sl.Current().Interface().(UserForgotPassword)
-
-	/* input validation */
-	match := `^[\w\-\.\d]+@[\w\-\.\d]+\.[\w\-\.\d]+$`
-	if ok, _ := regexp.MatchString(match, forgotPassword.Email); !ok {
-		sl.ReportError(forgotPassword.Email, "Email", "Email", "email", "")
 	}
 }
 

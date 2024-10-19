@@ -23,12 +23,8 @@ func main() {
 	Config.InitJWT()
 
 	v := validator.New()
-	v.RegisterStructValidation(Models.UserStructLevelValidation, Models.UserIns{})
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
-	v.RegisterStructValidation(Models.UserForgotPasswordStructLevelValidation, Models.UserForgotPassword{})
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
-	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
-	v.RegisterStructValidation(Models.ClientStructLevelValidation, Models.ClientIns{})
 
 	app := iris.New()
 	app.Validator = v
