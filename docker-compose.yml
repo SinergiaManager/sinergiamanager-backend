@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   go-server:
     restart: always
@@ -26,6 +24,13 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+      - ./script/example.sh:/example.sh
+      - ./script/file.js:/file.js
+    env_file:
+      - .env
+    entrypoint: ["sh", "example.sh"]
+    command: ["mongod", "--quiet"]
+
 
   mailserverTest:
     restart: always
