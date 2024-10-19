@@ -51,9 +51,9 @@ func Logout(ctx iris.Context) {
 }
 
 func Register(ctx iris.Context) {
-	user := &Models.UserIns{}
+	credentials := &Models.Register{}
 
-	err := ctx.ReadJSON(user)
+	err := ctx.ReadJSON(credentials)
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
 			ctx.StatusCode(iris.StatusInternalServerError)
@@ -64,6 +64,13 @@ func Register(ctx iris.Context) {
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
+
+	user := &Models.UserIns{}
+	user.Email = credentials.Email
+	user.Password = credentials.Password
+	user.Username = credentials.Username
+	user.Name = credentials.Name
+	user.Surname = credentials.Surname
 
 	var count int64 = 0
 	count, err = Config.DB.Collection("users").CountDocuments(ctx, bson.M{"$or": []bson.M{{"email": user.Email}, {"username": user.Username}}})
