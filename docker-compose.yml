@@ -1,5 +1,5 @@
 services:
-  go-server:
+  go-server:  # fetcha la configurazione lui dal db, e starta lui i containers necessari con le configurazioni prese dal db
     restart: always
     image: golang:latest
     container_name: go-server
@@ -7,14 +7,16 @@ services:
       - "8080:8080"
     volumes:
       - .:/go/src/app
+      - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /go/src/app
     env_file:
       - .env
     command: go run main.go
     depends_on:
       - mongo
-      - mailserver
       - mailserverTest
+    networks:
+      - mynetwork
 
   mongo:
     restart: always
@@ -24,12 +26,14 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-      - ./script/example.sh:/example.sh
-      - ./script/file.js:/file.js
+      - ./script/example.sh:/example.sh # not in production
+      - ./script/file.js:/file.js # not in production
     env_file:
       - .env
-    entrypoint: ["sh", "example.sh"]
-    command: ["mongod", "--quiet"]
+    entrypoint: ["sh", "example.sh"]  # not in production
+    command: ["mongod", "--quiet"]  # not in production
+    networks:
+      - mynetwork
 
 
   mailserverTest:
@@ -39,18 +43,12 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
-
-  mailserver:
-    restart: always
-    image: juanluisbaptiste/postfix:latest
-    container_name: mailserver
-    ports:
-      - "2500:2500"
-    environment:
-      SMTP_SERVER: ${SMTP_SERVER}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SERVER_HOSTNAME: ${SERVER_HOSTNAME}
+    networks:
+      - mynetwork
 
 volumes:
   mongo-data:
+
+networks:
+  mynetwork:
+    driver: bridge

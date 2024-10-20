@@ -18,6 +18,9 @@ func main() {
 		Config.DisconnectDb()
 		log.Fatalf("Error connecting to MongoDB: %v", err)
 	}
+
+	Config.DockerConfig()
+
 	defer Config.DisconnectDb()
 
 	Config.InitJWT()

@@ -5,14 +5,14 @@ import (
 )
 
 type ConfigDb struct {
-	ID            string    `bson:"_id"`
-	SupportEmail  string    `bson:"support_email"`
-	SmtpHost      string    `bson:"smtp_host"`
-	SmtpPort      int       `bson:"smtp_port"`
-	SmtpEmail     string    `bson:"smtp_user"`
-	SmtpPasssword string    `bson:"smtp_pass"`
-	InsertAt      time.Time `bson:"insert_at"`
-	UpdateAt      time.Time `bson:"update_at"`
+	ID           string    `bson:"_id"`
+	SupportEmail string    `bson:"support_email"`
+	SmtpHost     string    `bson:"smtp_host"`
+	SmtpPort     int       `bson:"smtp_port"`
+	SmtpEmail    string    `bson:"smtp_user"`
+	SmtpPassword string    `bson:"smtp_pass"`
+	InsertAt     time.Time `bson:"insert_at"`
+	UpdateAt     time.Time `bson:"update_at"`
 }
 
 type ConfigIns struct {
