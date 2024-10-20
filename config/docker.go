@@ -65,6 +65,11 @@ func DockerConfig() {
 				fmt.Printf("Container %s started successfully\n", containerName)
 			} else {
 				log.Printf("Container %s is already running\n", containerName)
+
+				err = cli.ContainerRestart(ctx, c.ID, container.StopOptions{})
+				if err != nil {
+					log.Fatalf("Error restarting container: %v", err)
+				}
 			}
 			return
 		}
@@ -125,5 +130,4 @@ func DockerConfig() {
 	}
 
 	fmt.Println("Container started successfully:", resp.ID)
-	return
 }
