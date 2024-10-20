@@ -18,7 +18,7 @@ type ConfigDb struct {
 type ConfigIns struct {
 	SupportEmail string    `json:"support_email" bson:"support_email" validate:"required,email"`
 	SmtpHost     string    `json:"smtp_host" bson:"smtp_host" validate:"required,hostname"`
-	SmtpPort     int       `json:"smtp_port" bson:"smtp_port" validate:"required,hostname_port"`
+	SmtpPort     int       `json:"smtp_port" bson:"smtp_port" validate:"required"`
 	SmtpEmail    string    `json:"smtp_user" bson:"smtp_user" validate:"required,email"`
 	SmtpPassword string    `json:"smtp_pass" bson:"smtp_pass" validate:"required"`
 	InsertAt     time.Time `json:"insert_at" bson:"insert_at"`

@@ -90,6 +90,7 @@ func DockerConfig() {
 			fmt.Sprintf("SMTP_PASSWORD=%s", config.SmtpPassword),
 			fmt.Sprintf("SMTP_PORT=%d", config.SmtpPort),
 			fmt.Sprintf("SERVER_HOSTNAME=%s", "localhost"),
+			fmt.Sprintf("SUPPORT_EMAIL=%s", config.SupportEmail),
 		},
 		ExposedPorts: nat.PortSet{
 			"2500/tcp": struct{}{},
