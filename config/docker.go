@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -82,8 +83,17 @@ func DockerConfig() {
 		},
 	}
 
+	pulledImage, err := cli.ImagePull(ctx, os.Getenv("MAILSERVER_IMAGE"), image.PullOptions{})
+	if err != nil {
+		log.Fatalf("Error pulling image: %v", err)
+		return
+	}
+	defer pulledImage.Close()
+
+	io.Copy(os.Stdout, pulledImage)
+
 	configDocker := &container.Config{
-		Image: os.Getenv("MAILSERVER_IMAGE"), // Image specified in .env
+		Image: os.Getenv("MAILSERVER_IMAGE"),
 		Env: []string{
 			fmt.Sprintf("SMTP_SERVER=%s", config.SmtpHost),
 			fmt.Sprintf("SMTP_USERNAME=%s", config.SmtpEmail),

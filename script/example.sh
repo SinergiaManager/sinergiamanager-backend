@@ -1,5 +1,4 @@
 #!/bin/bash
-
 sh -c "docker-entrypoint.sh mongod --quiet" &
 
 sleep 5
