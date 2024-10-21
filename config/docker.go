@@ -49,7 +49,7 @@ func DockerConfig() {
 
 	// Check if the container already exists
 	containerName := "mailserver"
-	containers, err := cli.ContainerList(ctx, container.ListOptions{})
+	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		log.Fatalf("Error listing containers: %v", err)
 		return
@@ -76,21 +76,14 @@ func DockerConfig() {
 		}
 	}
 
+	fmt.Printf("Container %s does not exist, creating it\n", containerName)
+
 	// If the container does not exist, create it
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
 			"sinergiamanager-backend_mynetwork": {},
 		},
 	}
-
-	pulledImage, err := cli.ImagePull(ctx, os.Getenv("MAILSERVER_IMAGE"), image.PullOptions{})
-	if err != nil {
-		log.Fatalf("Error pulling image: %v", err)
-		return
-	}
-	defer pulledImage.Close()
-
-	io.Copy(os.Stdout, pulledImage)
 
 	configDocker := &container.Config{
 		Image: os.Getenv("MAILSERVER_IMAGE"),
@@ -126,6 +119,8 @@ func DockerConfig() {
 		return
 	}
 	defer reader.Close()
+
+	io.Copy(os.Stdout, reader)
 
 	// Create the container
 	resp, err := cli.ContainerCreate(ctx, configDocker, hostConfig, networkingConfig, nil, containerName)
