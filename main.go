@@ -28,6 +28,7 @@ func main() {
 	v := validator.New()
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
+	v.RegisterStructValidation(Models.WarehouseStructLevelValidation, Models.WarehouseIns{})
 
 	app := iris.New()
 	app.Validator = v

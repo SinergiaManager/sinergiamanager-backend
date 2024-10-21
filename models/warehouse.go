@@ -22,18 +22,19 @@ type WarehouseDb struct {
 }
 
 type WarehouseIns struct {
-	Name     string          `json:"name" validate:"required"`
-	Location string          `json:"location" validate:"required"`
-	Code     string          `json:"code" `
-	Items    []ItemWarehouse `json:"items"`
-	UpdateAt time.Time       `json:"update_at"`
-	InsertAt time.Time       `json:"insert_at"`
+	Name     string          `json:"name" bson:"name" validate:"required"`
+	Location string          `json:"location" bson:"location" validate:"required"`
+	Code     string          `json:"code" bson:"code"`
+	Items    []ItemWarehouse `json:"items" bson:"items"`
+	UpdateAt time.Time       `json:"update_at" bson:"update_at"`
+	InsertAt time.Time       `json:"insert_at" bson:"insert_at"`
 }
 
-func WarehouseStructLevelValidation(wl validator.StructLevel) {
-	warehouse := wl.Current().Interface().(WarehouseIns)
+func WarehouseStructLevelValidation(sl validator.StructLevel) {
+	warehouse := sl.Current().Interface().(WarehouseIns)
 
-	if len(warehouse.Name) > 3 {
-		wl.ReportError(warehouse.Name, "Name", "Name", "name", "")
+	/* input validation */
+	if len(warehouse.Name) < 3 {
+		sl.ReportError(warehouse.Name, "Name", "name", "minlength", "3")
 	}
 }
