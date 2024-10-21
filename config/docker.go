@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -79,9 +80,35 @@ func DockerConfig() {
 	fmt.Printf("Container %s does not exist, creating it\n", containerName)
 
 	// If the container does not exist, create it
+	networkNames, err := cli.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		log.Fatalf("Error listing networks: %v", err)
+		return
+	}
+
+	networkExists := false
+	var networkName string
+
+	if len(networkNames) > 0 {
+		for _, n := range networkNames {
+			if strings.Contains(n.Name, "mynetwork") {
+				networkExists = true
+				networkName = n.Name
+				break
+			}
+		}
+	}
+
+	if !networkExists {
+		log.Fatalf("Error creating network: %v", err)
+		return
+	}
+
+	fmt.Printf("Network %s exists\n", networkName)
+
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			"sinergiamanager-backend_mynetwork": {},
+			networkName: {},
 		},
 	}
 
