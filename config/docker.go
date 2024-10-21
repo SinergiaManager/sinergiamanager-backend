@@ -58,22 +58,12 @@ func DockerConfig() {
 
 	for _, c := range containers {
 		if c.Names[0] == "/"+containerName {
-			// Container exists, start it if it's not already running
-			if c.State != "running" {
-				log.Printf("Starting existing container: %s\n", containerName)
-				if err := cli.ContainerStart(ctx, c.ID, container.StartOptions{}); err != nil {
-					log.Fatalf("Error starting existing container: %v", err)
-				}
-				fmt.Printf("Container %s started successfully\n", containerName)
-			} else {
-				log.Printf("Container %s is already running\n", containerName)
-
-				err = cli.ContainerRestart(ctx, c.ID, container.StopOptions{})
-				if err != nil {
-					log.Fatalf("Error restarting container: %v", err)
-				}
+			fmt.Printf("Container %s exists\n", containerName)
+			// If the container exists, delete it
+			if err := cli.ContainerRemove(ctx, c.ID, container.RemoveOptions{Force: true}); err != nil {
+				log.Fatalf("Error removing container: %v", err)
+				return
 			}
-			return
 		}
 	}
 

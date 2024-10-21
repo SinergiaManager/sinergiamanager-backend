@@ -112,6 +112,7 @@ func UpdateConfig(ctx iris.Context) {
 		return
 	}
 
+	Config.DockerConfig()
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": updatedConfig})
 }
@@ -134,6 +135,7 @@ func CreateConfig(ctx iris.Context) {
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
+	Config.DockerConfig()
 
 	ctx.JSON(iris.Map{"message": "Config created"})
 }
@@ -160,6 +162,7 @@ func DeleteConfig(ctx iris.Context) {
 		ctx.JSON(iris.Map{"error": "Config not found"})
 		return
 	}
+	Config.DockerConfig()
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"message": "Config deleted successfully"})
