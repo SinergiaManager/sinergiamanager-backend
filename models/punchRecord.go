@@ -12,8 +12,8 @@ type PunchRecordDb struct {
 	PunchType  string    `bson:"punch_type"`
 	PunchTime  time.Time `bson:"punch_time"`
 	Location   string    `bson:"location"`
-	CreatedAt  time.Time `bson:"created_at"`
-	UpdatedAt  time.Time `bson:"updated_at"`
+	InsertAt   time.Time `bson:"created_at"`
+	UpdateAt   time.Time `bson:"updated_at"`
 }
 
 type PunchRecordIns struct {
@@ -21,8 +21,8 @@ type PunchRecordIns struct {
 	PunchType  string    `json:"punch_type" bson:"punch_type" validate:"required"`
 	PunchTime  time.Time `json:"punch_time" bson:"punch_time"`
 	Location   string    `json:"location" bson:"location" validate:"required"`
-	CreatedAt  time.Time `bson:"created_at"`
-	UpdatedAt  time.Time `bson:"updated_at"`
+	InsertAt   time.Time `bson:"created_at"`
+	UpdateAt   time.Time `bson:"updated_at"`
 }
 
 type PunchRecordOut struct {
@@ -31,8 +31,8 @@ type PunchRecordOut struct {
 	PunchType  string    `json:"punch_type" bson:"punch_type"`
 	PunchTime  time.Time `json:"punch_time" bson:"punch_time"`
 	Location   string    `json:"location" bson:"location"`
-	CreatedAt  time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" bson:"updated_at"`
+	InsertAt   time.Time `json:"created_at" bson:"created_at"`
+	UpdateAt   time.Time `json:"updated_at" bson:"updated_at"`
 }
 
 func PunchRecordStructLevelValidation(sl validator.StructLevel) {
@@ -43,6 +43,6 @@ func PunchRecordStructLevelValidation(sl validator.StructLevel) {
 	}
 
 	if punchRecord.PunchTime.IsZero() {
-		punchRecord.PunchTime = time.Now()
+		punchRecord.PunchTime = time.Now().UTC()
 	}
 }
