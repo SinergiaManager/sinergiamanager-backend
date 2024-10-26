@@ -28,6 +28,7 @@ func main() {
 	v := validator.New()
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
+	v.RegisterStructValidation(Models.PunchRecordStructLevelValidation, Models.PunchRecordIns{})
 
 	app := iris.New()
 	app.Validator = v
@@ -114,6 +115,15 @@ func main() {
 		client.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreateClient)
 		client.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdateClient)
 		client.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeleteClient)
+	}
+
+	punchRecord := app.Party("/punch-records")
+	{
+		punchRecord.Get("/", Config.JWTMiddleware([]string{}), Controllers.GetAllPunchRecords)
+		punchRecord.Get("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetPunchRecord)
+		punchRecord.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreatePunchRecord)
+		punchRecord.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdatePunchRecord)
+		punchRecord.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeletePunchRecord)
 	}
 
 	go Services.SetupJobScheduler(context.TODO())
