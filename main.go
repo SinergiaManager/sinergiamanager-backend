@@ -120,6 +120,10 @@ func main() {
 	punchRecord := app.Party("/punch-records")
 	{
 		punchRecord.Get("/", Config.JWTMiddleware([]string{}), Controllers.GetAllPunchRecords)
+		punchRecord.Get("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetPunchRecord)
+		punchRecord.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreatePunchRecord)
+		punchRecord.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdatePunchRecord)
+		punchRecord.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeletePunchRecord)
 	}
 
 	go Services.SetupJobScheduler(context.TODO())
