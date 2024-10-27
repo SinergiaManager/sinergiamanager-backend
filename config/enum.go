@@ -21,3 +21,13 @@ var EnumNotificationType = struct {
 	SMS:   "sms",
 	INAPP: "inapp",
 }
+
+type PunchRecordType string
+
+var EnumPunchRecordType = struct {
+	IN  PunchRecordType
+	OUT PunchRecordType
+}{
+	IN:  "IN",
+	OUT: "OUT",
+}
