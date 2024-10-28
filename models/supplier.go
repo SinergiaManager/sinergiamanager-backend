@@ -1,18 +1,19 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/ltns35/go-vat"
+	"github.com/mattes/vat"
 )
 
 type SupplierIns struct {
-	Name      string    `json:"name" bson:"name" validate:"required, gte=3"`
+	Name      string    `json:"name" bson:"name" validate:"required,gte=3"`
 	Address   string    `json:"address" bson:"address" validate:"required"`
-	Phone     string    `json:"phone" bson:"phone" validate:"e164"`
-	Email     string    `json:"email" bson:"email" validate:"email"`
-	VATNumber string    `json:"vat_number" bson:"vat_number"`
+	Phone     string    `json:"phone" bson:"phone" validate:"omitempty,e164"`
+	Email     string    `json:"email" bson:"email" validate:"omitempty,email"`
+	VATNumber string    `json:"vat_number" bson:"vat_number" validate:"required"`
 	Code      string    `json:"code" bson:"code"`
 	InsertAt  time.Time `json:"insert_at" bson:"insert_at"`
 	UpdateAt  time.Time `json:"update_at" bson:"update_at"`
@@ -31,15 +32,23 @@ type SupplierDb struct {
 	UpdateAt       time.Time `bson:"update_at"`
 }
 
-func SupplierstructLevelValidation(wl validator.StructLevel) {
-	supplier := wl.Current().Interface().(SupplierIns)
+func SupplierStructLevelValidation(sl validator.StructLevel) {
+	supplier := sl.Current().Interface().(SupplierIns)
 
-	vatResult, err := vat.Validate(supplier.VATNumber)
+	vatResult, err := vat.CheckVAT(supplier.VATNumber)
 	if err != nil {
-		wl.ReportError(supplier.VATNumber, "VATNumber", "VATNumber", "VATNumber", "")
+		fmt.Printf("Error checking VAT: %v\n", err)
+		sl.ReportError(supplier.VATNumber, "VATNumber", "VATNumber", "VATNumber", "")
+		return
 	}
 
-	if !vatResult.IsValid {
-		wl.ReportError(supplier.VATNumber, "VATNumber", "VATNumber", "VATNumber", "")
+	if vatResult == nil {
+		fmt.Println("vatResult is nil")
+		sl.ReportError(supplier.VATNumber, "VATNumber", "VATNumber", "VATNumber", "")
+		return
+	}
+
+	if !vatResult.Valid {
+		sl.ReportError(supplier.VATNumber, "VATNumber", "VATNumber", "VATNumber", "")
 	}
 }

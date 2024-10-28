@@ -5,7 +5,7 @@ import (
 )
 
 type ClientIns struct {
-	Name     string    `json:"name" bson:"name" validate:"required, gte=3, lte=50"`
+	Name     string    `json:"name" bson:"name" validate:"required,gte=3,lte=50"`
 	Email    string    `json:"email" bson:"email" validate:"required,email"`
 	Phone    string    `json:"phone" bson:"phone" validate:"required,e164"`
 	Address  string    `json:"address" bson:"address" validate:"required"`
