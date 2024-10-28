@@ -96,8 +96,7 @@ func GetWarehouseById(ctx iris.Context) {
 
 func CreateWarehouse(ctx iris.Context) {
 	warehouse := &Models.WarehouseIns{}
-	err := ctx.ReadJSON(warehouse)
-	if err != nil {
+	if err := ctx.ReadJSON(warehouse); err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
@@ -106,7 +105,7 @@ func CreateWarehouse(ctx iris.Context) {
 	warehouse.InsertAt = time.Now().UTC()
 	warehouse.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("warehouses").InsertOne(ctx, warehouse)
+	_, err := Config.DB.Collection("warehouses").InsertOne(ctx, warehouse)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
