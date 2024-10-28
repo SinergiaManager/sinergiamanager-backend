@@ -51,6 +51,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailgun/raymond/v2 v2.0.48 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mattes/vat v0.0.0-20200608180335-2a46385ea84d // indirect
 	github.com/microcosm-cc/bluemonday v1.0.26 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
