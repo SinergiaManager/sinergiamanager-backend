@@ -29,6 +29,7 @@ func main() {
 	v.RegisterStructValidation(Models.UserChangePasswordStructLevelValidation, Models.UserChangePassword{})
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
 	v.RegisterStructValidation(Models.PunchRecordStructLevelValidation, Models.PunchRecordIns{})
+	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
 	v.RegisterStructValidation(Models.WarehouseStructLevelValidation, Models.WarehouseIns{})
 
 	app := iris.New()
