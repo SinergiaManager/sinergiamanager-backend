@@ -95,17 +95,17 @@ func GetWarehouseById(ctx iris.Context) {
 }
 
 func CreateWarehouse(ctx iris.Context) {
-	var warehouse *Models.WarehouseIns
-	err := ctx.ReadBody(&warehouse)
-	if err != nil {
+	warehouse := &Models.WarehouseIns{}
+	if err := ctx.ReadJSON(warehouse); err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
+
 	warehouse.InsertAt = time.Now().UTC()
 	warehouse.UpdateAt = time.Now().UTC()
 
-	_, err = Config.DB.Collection("warehouses").InsertOne(ctx, warehouse)
+	_, err := Config.DB.Collection("warehouses").InsertOne(ctx, warehouse)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})

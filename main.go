@@ -30,6 +30,7 @@ func main() {
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
 	v.RegisterStructValidation(Models.PunchRecordStructLevelValidation, Models.PunchRecordIns{})
 	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
+	v.Struct(Models.WarehouseIns{})
 
 	app := iris.New()
 	app.Validator = v
