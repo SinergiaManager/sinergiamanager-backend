@@ -23,6 +23,8 @@ func main() {
 
 	defer Config.DisconnectDb()
 
+	Services.Seeder()
+
 	Config.InitJWT()
 
 	v := validator.New()
