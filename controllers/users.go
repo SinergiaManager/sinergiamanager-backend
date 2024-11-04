@@ -52,20 +52,44 @@ func GetAllUsers(ctx iris.Context) {
 }
 
 func CreateUser(ctx iris.Context) {
-	var user *Models.UserIns
-	err := ctx.ReadBody(&user)
+	user := &Models.UserIns{}
+
+	err := ctx.ReadJSON(user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
+
+	var count int64
+	count, err = Config.DB.Collection("users").CountDocuments(ctx, bson.M{"$or": []bson.M{{"email": user.Email}, {"username": user.Username}}})
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": "Database error", "details": err.Error()})
+		return
+	}
+
+	if count > 0 {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Email or username already exists"})
+		return
+	}
+
 	user.InsertAt = time.Now().UTC()
 	user.UpdateAt = time.Now().UTC()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": "Failed to hash password", "details": err.Error()})
+		return
+	}
+	user.Password = string(hashedPassword)
 
 	_, err = Config.DB.Collection("users").InsertOne(ctx, user)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"message": err.Error()})
+		ctx.JSON(iris.Map{"error": "Failed to insert user", "details": err.Error()})
 		return
 	}
 

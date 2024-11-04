@@ -28,7 +28,7 @@ func DockerConfig() {
 
 	cli, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv, dockerClient.WithAPIVersionNegotiation())
 	if err != nil {
-		log.Fatalf("Error creating Docker client: %v", err)
+		log.Printf("Error creating Docker client: %v", err)
 		return
 	}
 
@@ -39,9 +39,9 @@ func DockerConfig() {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Fatalf("Error finding config: %v", err)
+			log.Printf("Error finding config: %v", err)
 		} else {
-			log.Fatalf("Error finding config: %v", err)
+			log.Printf("Error finding config: %v", err)
 		}
 		return
 	}
@@ -52,7 +52,7 @@ func DockerConfig() {
 	containerName := "mailserver"
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
-		log.Fatalf("Error listing containers: %v", err)
+		log.Printf("Error listing containers: %v", err)
 		return
 	}
 
@@ -61,7 +61,7 @@ func DockerConfig() {
 			fmt.Printf("Container %s exists\n", containerName)
 			// If the container exists, delete it
 			if err := cli.ContainerRemove(ctx, c.ID, container.RemoveOptions{Force: true}); err != nil {
-				log.Fatalf("Error removing container: %v", err)
+				log.Printf("Error removing container: %v", err)
 				return
 			}
 		}
@@ -72,7 +72,7 @@ func DockerConfig() {
 	// If the container does not exist, create it
 	networkNames, err := cli.NetworkList(ctx, network.ListOptions{})
 	if err != nil {
-		log.Fatalf("Error listing networks: %v", err)
+		log.Printf("Error listing networks: %v", err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func DockerConfig() {
 	}
 
 	if !networkExists {
-		log.Fatalf("Error creating network: %v", err)
+		log.Printf("Error creating network: %v", err)
 		return
 	}
 
@@ -132,7 +132,7 @@ func DockerConfig() {
 	// Pull the image if it doesn't exist
 	reader, err := cli.ImagePull(ctx, configDocker.Image, image.PullOptions{})
 	if err != nil {
-		log.Fatalf("Error pulling image: %v", err)
+		log.Printf("Error pulling image: %v", err)
 		return
 	}
 	defer reader.Close()
@@ -142,13 +142,13 @@ func DockerConfig() {
 	// Create the container
 	resp, err := cli.ContainerCreate(ctx, configDocker, hostConfig, networkingConfig, nil, containerName)
 	if err != nil {
-		log.Fatalf("Error creating container: %v", err)
+		log.Printf("Error creating container: %v", err)
 		return
 	}
 
 	// Start the container
 	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		log.Fatalf("Error starting container: %v", err)
+		log.Printf("Error starting container: %v", err)
 		return
 	}
 
