@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -10,13 +9,13 @@ import (
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"github.com/go-faker/faker/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Seeder() {
 	Config.DB.Drop(context.Background())
 
 	clients := []Models.ClientIns{}
-	items := []Models.ItemIns{}
 	warehouses := []Models.WarehouseIns{}
 	ctx := context.TODO()
 
@@ -42,8 +41,6 @@ func Seeder() {
 		panic(err)
 	}
 
-	fmt.Printf("Clients inserted")
-
 	supplierIDs := []primitive.ObjectID{}
 	for i := 0; i < 5; i++ {
 		supplier := Models.SupplierIns{
@@ -61,7 +58,8 @@ func Seeder() {
 		}
 		supplierIDs = append(supplierIDs, result.InsertedID.(primitive.ObjectID))
 	}
-	// Seed items using supplier IDs
+
+	ItemIds := []primitive.ObjectID{}
 	for i := 0; i < 10; i++ {
 		item := Models.ItemIns{
 			Name:        faker.Word(),
@@ -71,26 +69,19 @@ func Seeder() {
 			InsertAt:    time.Now().UTC(),
 			UpdateAt:    time.Now().UTC(),
 		}
-		items = append(items, item)
+		result, err := Config.DB.Collection("suppliers").InsertOne(ctx, item)
+		if err != nil {
+			panic(err)
+		}
+		ItemIds = append(ItemIds, result.InsertedID.(primitive.ObjectID))
 	}
 
-	// Insert items into database
-	itemInterfaces := make([]interface{}, len(items))
-	for i, v := range items {
-		itemInterfaces[i] = v
-	}
-	_, err = Config.DB.Collection("items").InsertMany(ctx, itemInterfaces)
-	if err != nil {
-		panic(err)
-	}
-
-	// Seed warehouses and add items with random quantities
 	for i := 0; i < 3; i++ {
 		warehouseItems := []Models.ItemWarehouse{}
 		for j := 0; j < 3; j++ {
 			warehouseItems = append(warehouseItems, Models.ItemWarehouse{
-				ItemDb:   items[rand.Intn(len(items))].Code, // Random item ID
-				Quantity: rand.Intn(100) + 1,                // Random quantity
+				ItemDb:   ItemIds[rand.Intn(len(ItemIds))], // Random item ObjectID
+				Quantity: rand.Intn(100) + 1,               // Random quantity
 			})
 		}
 
@@ -105,7 +96,6 @@ func Seeder() {
 		warehouses = append(warehouses, warehouse)
 	}
 
-	// Insert warehouses into database
 	warehouseInterfaces := make([]interface{}, len(warehouses))
 	for i, v := range warehouses {
 		warehouseInterfaces[i] = v
@@ -115,12 +105,16 @@ func Seeder() {
 		panic(err)
 	}
 
-	// Seed user admin for punch records
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	password := string(hashedPassword)
 	userAdmin := Models.UserIns{
 		Username: "admin",
 		Name:     "Admin",
 		Surname:  "User",
-		Password: "admin", // In production, hash this password
+		Password: password,
 		Role:     "admin",
 		InsertAt: time.Now().UTC(),
 		UpdateAt: time.Now().UTC(),
@@ -130,9 +124,9 @@ func Seeder() {
 	if err != nil {
 		panic(err)
 	}
-	adminID := result.InsertedID.(primitive.ObjectID).String()
 
-	// Seed punch records with the admin user ID
+	adminID := result.InsertedID.(primitive.ObjectID)
+
 	for i := 0; i < 5; i++ {
 		punchRecord := Models.PunchRecordIns{
 			EmployeeID: adminID,

@@ -2,11 +2,13 @@ package models
 
 import (
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ItemWarehouse struct {
-	ItemDb   string `json:"item_id" bson:"item_id" validate:"required,mongodb"`
-	Quantity int    `json:"quantity" bson:"quantity" validate:"required,gte=0"`
+	ItemDb   primitive.ObjectID `json:"item_id" bson:"item_id" validate:"required,mongodb"`
+	Quantity int                `json:"quantity" bson:"quantity" validate:"required,gte=0"`
 }
 
 type WarehouseDb struct {
