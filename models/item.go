@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ItemDb struct {
@@ -17,12 +18,12 @@ type ItemDb struct {
 }
 
 type ItemIns struct {
-	Name        string    `json:"name" bson:"name" validate:"required,gte=3,lte=50"`
-	Code        string    `json:"code" bson:"code"`
-	SupplierID  string    `json:"supplier_id" bson:"supplier_id"`
-	Description string    `json:"description" bson:"description" validate:"gte=3,lte=100"`
-	InsertAt    time.Time `json:"insert_at" bson:"insert_at"`
-	UpdateAt    time.Time `json:"update_at" bson:"update_at"`
+	Name        string             `json:"name" bson:"name" validate:"required,gte=3,lte=50"`
+	Code        string             `json:"code" bson:"code"`
+	SupplierID  primitive.ObjectID `json:"supplier_id" bson:"supplier_id"`
+	Description string             `json:"description" bson:"description" validate:"gte=3,lte=100"`
+	InsertAt    time.Time          `json:"insert_at" bson:"insert_at"`
+	UpdateAt    time.Time          `json:"update_at" bson:"update_at"`
 }
 
 func ItemStructLevelValidation(sl validator.StructLevel) {

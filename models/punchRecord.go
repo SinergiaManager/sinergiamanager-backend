@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PunchRecordDb struct {
@@ -17,12 +18,12 @@ type PunchRecordDb struct {
 }
 
 type PunchRecordIns struct {
-	EmployeeID string    `json:"employee_id" bson:"employee_id" validate:"required"`
-	PunchType  string    `json:"punch_type" bson:"punch_type" validate:"required"`
-	PunchTime  time.Time `json:"punch_time" bson:"punch_time"`
-	Location   string    `json:"location" bson:"location" validate:"required"`
-	InsertAt   time.Time `bson:"created_at"`
-	UpdateAt   time.Time `bson:"updated_at"`
+	EmployeeID primitive.ObjectID `json:"employee_id" bson:"employee_id" validate:"required"`
+	PunchType  string             `json:"punch_type" bson:"punch_type" validate:"required"`
+	PunchTime  time.Time          `json:"punch_time" bson:"punch_time"`
+	Location   string             `json:"location" bson:"location" validate:"required"`
+	InsertAt   time.Time          `bson:"created_at"`
+	UpdateAt   time.Time          `bson:"updated_at"`
 }
 
 type PunchRecordOut struct {
