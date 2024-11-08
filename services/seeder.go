@@ -69,7 +69,7 @@ func Seeder() {
 			InsertAt:    time.Now().UTC(),
 			UpdateAt:    time.Now().UTC(),
 		}
-		result, err := Config.DB.Collection("suppliers").InsertOne(ctx, item)
+		result, err := Config.DB.Collection("items").InsertOne(ctx, item)
 		if err != nil {
 			panic(err)
 		}
