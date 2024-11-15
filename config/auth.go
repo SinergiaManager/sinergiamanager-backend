@@ -54,7 +54,7 @@ func GenerateToken(signer *jwt.Signer, user *Models.UserDb) ([]byte, error) {
 		Id:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
-		Role:     string(EnumUserRole.USER),
+		Role:     user.Role,
 	}
 
 	if user.ID != claims.Id {

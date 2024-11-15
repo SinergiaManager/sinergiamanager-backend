@@ -14,13 +14,13 @@ import (
 )
 
 // Esempio di funzione di notifica che sarà schedulata per l'esec invio di notifiche via email
-func SendScheduledNotifications(ctx context.Context) {
+func SendScheduledNotificationsByEmail(ctx context.Context) {
 	go func() {
 		fmt.Println("Job iniziato:", time.Now())
 		defer fmt.Println("Job completato:", time.Now())
 		fmt.Println("Simulazione di invio di notifiche...")
 
-		filter := bson.M{"isDelivered": false}
+		filter := bson.M{"isDelivered": false, "types": bson.M{"$in": []string{string(Config.EnumNotificationType.EMAIL)}}}
 
 		cursor, err := Config.DB.Collection("notifications").Find(ctx, filter)
 		if err != nil {

@@ -1,4 +1,5 @@
  // this part shouldnt exist in production
+
 const smtpHost = process.env.SMTP_SERVER;
 const smtpPort = process.env.SMTP_PORT;
 const smtpEmail = process.env.SMTP_USERNAME;

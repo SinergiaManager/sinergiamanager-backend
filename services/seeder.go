@@ -8,6 +8,7 @@ import (
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"github.com/go-faker/faker/v4"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -105,19 +106,27 @@ func Seeder() {
 		panic(err)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("adminadmin"), bcrypt.DefaultCost)
 	if err != nil {
 		panic(err)
 	}
-	password := string(hashedPassword)
-	userAdmin := Models.UserIns{
-		Username: "admin",
-		Name:     "Admin",
-		Surname:  "User",
-		Password: password,
-		Role:     "admin",
-		InsertAt: time.Now().UTC(),
-		UpdateAt: time.Now().UTC(),
+
+	userAdmin := bson.M{
+		"_id": func() primitive.ObjectID {
+			id, err := primitive.ObjectIDFromHex("673794884216b36623876602")
+			if err != nil {
+				panic(err)
+			}
+			return id
+		}(),
+		"username":  "admin",
+		"name":      "Admin",
+		"surname":   "Admin",
+		"email":     "admin@admin.com",
+		"password":  string(hashedPassword),
+		"role":      "admin",
+		"insert_at": time.Now().UTC(),
+		"update_at": time.Now().UTC(),
 	}
 
 	result, err := Config.DB.Collection("users").InsertOne(ctx, userAdmin)

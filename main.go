@@ -95,6 +95,7 @@ func main() {
 		notification.Get("/user/{userID:string}", Config.JWTMiddleware([]string{}), Controllers.GetNotificationsByUser)
 		notification.Get("/me", Config.JWTMiddleware([]string{}), Controllers.GetNotificationsMe)
 		notification.Get("/me/{id:string}", Config.JWTMiddleware([]string{}), Controllers.GetNotificationMe)
+		notification.Get("/sse", Config.JWTMiddleware([]string{}), Controllers.GetNotificationSSEMe)
 
 		notification.Post("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.CreateNotification)
 
