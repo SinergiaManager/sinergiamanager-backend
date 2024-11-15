@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -8,6 +9,7 @@ import (
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
 	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/kataras/iris/v12"
@@ -270,48 +272,85 @@ func GetNotificationSSEMe(ctx iris.Context) {
 		return
 	}
 
-	cursor, err := Config.DB.Collection("notifications").Find(ctx, bson.M{"user_id": objID, "is_delivered": false, "types": bson.M{"$in": []string{string(Config.EnumNotificationType.INAPP)}}})
+	changeStream, err := Config.DB.Collection("notifications").Watch(ctx, mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.M{"operationType": "insert", "fullDocument.user_id": objID, "fullDocument.is_delivered": false, "fullDocument.types": bson.M{"$in": []string{string(Config.EnumNotificationType.INAPP)}}}}},
+	}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+
 	if err != nil {
-		fmt.Println("Error with cursor:", err)
+		log.Println("Error creating ChangeStream:", err)
 		ctx.StatusCode(iris.StatusInternalServerError)
 		ctx.JSON(iris.Map{"error": err.Error()})
 		return
 	}
-	defer cursor.Close(ctx)
+	defer changeStream.Close(ctx)
 
-	for cursor.Next(ctx) {
-		var notification Models.NotificationDb
-		if err := cursor.Decode(&notification); err != nil {
-			log.Printf("Error decoding notification: %v", err)
-			continue
+	for {
+		if changeStream.Next(ctx) {
+
+			var notification struct {
+				FullDocument Models.NotificationDb `bson:"fullDocument"`
+			}
+
+			if err := changeStream.Decode(&notification); err != nil {
+				log.Println("Error decoding notification:", err)
+				continue
+			}
+
+			fullDoc := notification.FullDocument
+			fmt.Println("Notification received:", fullDoc)
+
+			notificationData := fmt.Sprintf(`{
+				"ID": "%s",
+				"UserID": "%s",
+				"Title": "%s",
+				"Message": "%s",
+				"InsertAt": "%s"
+		}`,
+				fullDoc.ID,
+				fullDoc.UserID,
+				fullDoc.Title,
+				fullDoc.Message,
+				fullDoc.InsertAt.Format(time.RFC3339))
+
+			data, err := json.Marshal(notificationData)
+			if err != nil {
+				log.Println("Error marshaling notification data:", err)
+				continue
+			}
+			ctx.Writef("data: %s\n\n", data)
+			ctx.ResponseWriter().Flush()
+
+			notifyObjId, err := primitive.ObjectIDFromHex(notification.FullDocument.ID)
+			if err != nil {
+				ctx.StatusCode(iris.StatusBadRequest)
+				ctx.JSON(iris.Map{"error": "Invalid notify ID format"})
+				return
+			}
+
+			update := bson.M{"$set": bson.M{"is_delivered": true, "delivered_at": time.Now().UTC()}}
+			_, err = Config.DB.Collection("notifications").UpdateOne(ctx, bson.M{"_id": notifyObjId}, update)
+			if err != nil {
+				log.Println("Error updating notification:", err)
+				continue
+			}
+
+			select {
+			case <-ctx.Request().Context().Done():
+				log.Println("Client disconnected or request canceled")
+				return
+			default:
+				// Continue to wait for next change
+			}
 		}
 
-		notificationData := iris.Map{
-			"ID":       notification.ID,
-			"Title":    notification.Title,
-			"InsertAt": notification.InsertAt,
+		if err := changeStream.Err(); err != nil {
+			log.Println("Error with ChangeStream:", err)
+			break
 		}
-		fmt.Println("Notification data:", notificationData)
 
-		ctx.Writef("data: %v\n\n", notificationData)
-		ctx.ResponseWriter().Flush()
-
-		select {
-		case <-ctx.Request().Context().Done():
-			fmt.Println("Client disconnected or request canceled")
-			return
-		default:
-			// Continue to the next notification
+		if changeStream.ID() == 0 {
+			log.Println("ChangeStream closed")
+			break
 		}
-	}
-
-	if err := cursor.Err(); err != nil {
-		log.Printf("Error with cursor iteration: %v", err)
-	}
-
-	update := bson.M{"$set": bson.M{"is_delivered": true, "delivered_at": time.Now().UTC()}}
-	_, err = Config.DB.Collection("notifications").UpdateMany(ctx, bson.M{"user_id": objID, "is_delivered": false, "types": bson.M{"$in": []string{string(Config.EnumNotificationType.INAPP)}}, "is_read": false}, update)
-	if err != nil {
-		fmt.Println("Error updating notifications:", err)
 	}
 }

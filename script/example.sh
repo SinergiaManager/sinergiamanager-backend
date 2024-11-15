@@ -1,7 +1,5 @@
 #!/bin/bash
-sh -c "docker-entrypoint.sh mongod --quiet" &
-
-sleep 5
+sh -c "docker-entrypoint.sh mongod --quiet --replSet rs0" &
 
 echo "Running example script"
 
