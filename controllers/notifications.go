@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"log"
 	"time"
 
 	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
@@ -181,19 +183,6 @@ func CreateNotification(ctx iris.Context) {
 	notification.InsertAt = time.Now().UTC()
 	notification.UpdateAt = time.Now().UTC()
 
-	isDelivered := true
-	for _, t := range notification.Types {
-		if t == string(Config.EnumNotificationType.EMAIL) {
-			isDelivered = false
-			break
-		}
-	}
-
-	if isDelivered {
-		notification.IsDelivered = true
-		notification.DeliveredAt = time.Now().UTC()
-	}
-
 	res, err := Config.DB.Collection("notifications").InsertOne(ctx, notification)
 	if err != nil {
 		ctx.StatusCode(iris.StatusInternalServerError)
@@ -266,4 +255,63 @@ func ReadNotification(ctx iris.Context) {
 
 	ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": id})
+}
+
+func GetNotificationSSEMe(ctx iris.Context) {
+	ctx.ContentType("text/event-stream")
+	ctx.Header("Cache-Control", "no-cache")
+	ctx.Header("Connection", "keep-alive")
+
+	Id := ctx.Values().Get("user").(Config.UserClaims).Id
+	objID, err := primitive.ObjectIDFromHex(Id)
+	if err != nil {
+		ctx.StatusCode(iris.StatusBadRequest)
+		ctx.JSON(iris.Map{"error": "Invalid user ID format"})
+		return
+	}
+
+	cursor, err := Config.DB.Collection("notifications").Find(ctx, bson.M{"user_id": objID, "is_delivered": false, "types": bson.M{"$in": []string{string(Config.EnumNotificationType.INAPP)}}})
+	if err != nil {
+		fmt.Println("Error with cursor:", err)
+		ctx.StatusCode(iris.StatusInternalServerError)
+		ctx.JSON(iris.Map{"error": err.Error()})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var notification Models.NotificationDb
+		if err := cursor.Decode(&notification); err != nil {
+			log.Printf("Error decoding notification: %v", err)
+			continue
+		}
+
+		notificationData := iris.Map{
+			"ID":       notification.ID,
+			"Title":    notification.Title,
+			"InsertAt": notification.InsertAt,
+		}
+		fmt.Println("Notification data:", notificationData)
+
+		ctx.Writef("data: %v\n\n", notificationData)
+		ctx.ResponseWriter().Flush()
+
+		select {
+		case <-ctx.Request().Context().Done():
+			fmt.Println("Client disconnected or request canceled")
+			return
+		default:
+			// Continue to the next notification
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Error with cursor iteration: %v", err)
+	}
+
+	update := bson.M{"$set": bson.M{"is_delivered": true, "delivered_at": time.Now().UTC()}}
+	_, err = Config.DB.Collection("notifications").UpdateMany(ctx, bson.M{"user_id": objID, "is_delivered": false, "types": bson.M{"$in": []string{string(Config.EnumNotificationType.INAPP)}}, "is_read": false}, update)
+	if err != nil {
+		fmt.Println("Error updating notifications:", err)
+	}
 }

@@ -105,16 +105,17 @@ func Seeder() {
 		panic(err)
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("adminadmin"), bcrypt.DefaultCost)
 	if err != nil {
 		panic(err)
 	}
-	password := string(hashedPassword)
+
 	userAdmin := Models.UserIns{
 		Username: "admin",
 		Name:     "Admin",
-		Surname:  "User",
-		Password: password,
+		Surname:  "Admin",
+		Email:    "admin@admin.com",
+		Password: string(hashedPassword),
 		Role:     "admin",
 		InsertAt: time.Now().UTC(),
 		UpdateAt: time.Now().UTC(),
