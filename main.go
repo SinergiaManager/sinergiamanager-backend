@@ -10,6 +10,7 @@ import (
 	Services "github.com/SinergiaManager/sinergiamanager-backend/services"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris/v12"
 )
 
@@ -132,6 +133,11 @@ func main() {
 	}
 
 	go Services.SetupJobScheduler(context.TODO())
+
+	crs := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+	app.UseRouter(crs)
 
 	app.Listen(":8080")
 }

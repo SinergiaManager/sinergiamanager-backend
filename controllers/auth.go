@@ -43,7 +43,19 @@ func Login(ctx iris.Context) {
 		return
 	}
 
-	ctx.JSON(iris.Map{"token": string(token)})
+	userOut := &Models.UserOut{
+		ID:       user.ID,
+		Username: user.Username,
+		Name:     user.Name,
+		Surname:  user.Surname,
+		Email:    user.Email,
+		Role:     user.Role,
+		InsertAt: user.InsertAt,
+		UpdateAt: user.UpdateAt,
+	}
+
+	ctx.StatusCode(iris.StatusOK)
+	ctx.JSON(iris.Map{"user": userOut, "token": string(token)})
 }
 
 func Logout(ctx iris.Context) {

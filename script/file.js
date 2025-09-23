@@ -5,9 +5,10 @@ const smtpPort = process.env.SMTP_PORT;
 const smtpEmail = process.env.SMTP_USERNAME;
 const smtpPassword = process.env.SMTP_PASSWORD;
 const supportEmail = process.env.SUPPORT_EMAIL;
+const mongoUri = process.env.MONGO_URI || 'mongodb://mongo:27017';
+const mongoDb = process.env.MONGO_DB || 'sinergiaManager';
 
-
-db = connect('mongodb://mongo:27017/sinergiaManager');
+db = connect(mongoUri + '/' + mongoDb);
 
 const exist = db.configs.findOne({})
 
