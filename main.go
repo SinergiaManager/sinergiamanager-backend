@@ -136,6 +136,9 @@ func main() {
 
 	crs := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+		ExposedHeaders: []string{"Authorization"},
 	})
 	app.UseRouter(crs)
 
