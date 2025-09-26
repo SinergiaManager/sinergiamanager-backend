@@ -1,4 +1,4 @@
- // this part shouldnt exist in production
+// this part shouldnt exist in production
 
 const smtpHost = process.env.SMTP_SERVER;
 const smtpPort = process.env.SMTP_PORT;
@@ -12,8 +12,9 @@ db = connect(mongoUri + '/' + mongoDb);
 
 const exist = db.configs.findOne({})
 
-if (!exist) { // this part shouldnt exist in production
+console.log('Config exist: ', exist);
 
+if (!exist) {
   db.configs.insertOne({
     smtp_host: smtpHost,
     smtp_port: parseInt(smtpPort, 10),

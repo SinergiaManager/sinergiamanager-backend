@@ -28,9 +28,10 @@ func GetAllWarehouses(ctx iris.Context) {
 			{Key: "localField", Value: "items.item_id"},
 			{Key: "foreignField", Value: "_id"},
 			{Key: "as", Value: "itemsDetails"},
-		}},
-			{Key: "$skip", Value: skip},
-			{Key: "$limit", Value: limit}}}
+		}}},
+		{{Key: "$skip", Value: skip}},
+		{{Key: "$limit", Value: limit}},
+	}
 
 	cursor, err := Config.DB.Collection("warehouses").Aggregate(ctx, pipeline)
 	if err != nil {
