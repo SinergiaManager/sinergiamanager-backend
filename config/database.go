@@ -7,12 +7,28 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+type Database struct {
+	pool *pgxpool.Pool
+}
+
+func CreateDatabase(ctx *context.Context, user string, password string, host string, port int, dbName string) Database {
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, dbName)
+
+	pool, err := pgxpool.New(*ctx, connString)
+	if err != nil {
+		log.Fatal("Unable to connect to database:", err)
+	}
+	db := Database{pool: pool}
+	return db
+}
 
 var (
 	DB     *mongo.Database
