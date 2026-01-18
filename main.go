@@ -2,20 +2,24 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 
-	Config "github.com/SinergiaManager/sinergiamanager-backend/config"
-	Controllers "github.com/SinergiaManager/sinergiamanager-backend/controllers"
-	Models "github.com/SinergiaManager/sinergiamanager-backend/models"
-	Services "github.com/SinergiaManager/sinergiamanager-backend/services"
+	"github.com/SinergiaManager/sinergiamanager-backend/internal/warehouse"
+	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris/v12"
 )
 
 func main() {
-	if err := Config.ConnectDb(); err != nil {
+	db, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_DATABASE")))
+	if err != nil {
+		log.Fatal("Unable to connect to database:", err)
+	}
+
+	defer db.Close()
+	/* if err := Config.ConnectDb(); err != nil {
 		Config.DisconnectDb()
 		log.Fatalf("Error connecting to MongoDB: %v", err)
 	}
@@ -33,12 +37,17 @@ func main() {
 	v.RegisterStructValidation(Models.ItemStructLevelValidation, Models.ItemIns{})
 	v.RegisterStructValidation(Models.PunchRecordStructLevelValidation, Models.PunchRecordIns{})
 	v.RegisterStructValidation(Models.SupplierStructLevelValidation, Models.SupplierIns{})
-	v.Struct(Models.WarehouseIns{})
+	v.Struct(Models.WarehouseIns{}) */
 
 	app := iris.New()
-	app.Validator = v
 
-	config := app.Party("/configs")
+	routes := app.Party("/")
+	warehouseModule := warehouse.NewModule(db)
+	warehouseModule.RegisterRoutes(routes)
+
+	/* app.Validator = v */
+
+	/* config := app.Party("/configs")
 	{
 		config.Get("/", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetAllConfigs)
 		config.Get("/{id:string}", Config.JWTMiddleware([]string{string(Config.EnumUserRole.ADMIN)}), Controllers.GetConfig)
@@ -70,18 +79,18 @@ func main() {
 		item.Post("/", Controllers.CreateItem)
 		item.Put("/{id:string}", Controllers.UpdateItem)
 		item.Delete("/{id:string}", Controllers.DeleteItem)
-	}
+	} */
 
-	warehouse := app.Party("/warehouses")
+	/* warehouse := app.Party("/warehouses")
 	{
 		warehouse.Get("/", Controllers.GetAllWarehouses)
 		warehouse.Get("/{id:string}", Controllers.GetWarehouseById)
 		warehouse.Post("/", Controllers.CreateWarehouse)
 		warehouse.Put("/{id:string}", Controllers.UpdateWarehouse)
 		warehouse.Delete("/{id:string}", Controllers.DeleteWarehouse)
-	}
+	} */
 
-	auth := app.Party("/auth")
+	/* auth := app.Party("/auth")
 	{
 		auth.Post("/login", Controllers.Login)
 		auth.Post("/logout", Config.JWTMiddleware([]string{}), Controllers.Logout)
@@ -130,17 +139,17 @@ func main() {
 		punchRecord.Post("/", Config.JWTMiddleware([]string{}), Controllers.CreatePunchRecord)
 		punchRecord.Put("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.UpdatePunchRecord)
 		punchRecord.Delete("/{id:string}", Config.JWTMiddleware([]string{}), Controllers.DeletePunchRecord)
-	}
+	} */
 
-	go Services.SetupJobScheduler(context.TODO())
+	/* go Services.SetupJobScheduler(context.TODO()) */
 
-	crs := cors.New(cors.Options{
+	/* crs := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"*"},
 		ExposedHeaders: []string{"Authorization"},
 	})
-	app.UseRouter(crs)
+	app.UseRouter(crs) */
 
 	app.Listen(":8080")
 }

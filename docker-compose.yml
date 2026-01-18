@@ -1,59 +1,44 @@
 services:
   go-server:  # fetcha la configurazione lui dal db, e starta lui i containers necessari con le configurazioni prese dal db
     restart: always
-    image: golang:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: go-server
     ports:
       - "8080:8080"
-    volumes:
-      - .:/go/src/app
-      - /var/run/docker.sock:/var/run/docker.sock
-    working_dir: /go/src/app
+#    volumes:
+#      - .:/go/src/app
+#      - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
-    command: go run main.go
     depends_on:
-      - mongo
-      - mailserverTest
+      - postgres
+#      - mongo
+#      - mailserverTest
     networks:
       - mynetwork
 
-  mongo:
-    restart: always
-    image: mongo:latest
-    container_name: mongo
+  postgres:
+    image: postgres:18
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-      - ./script/example.sh:/example.sh # not in production
-      - ./script/file.js:/file.js # not in production
-    env_file:
-      - .env
-    entrypoint: ["sh", "example.sh"]  # not in production
-    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
-    healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017 --quiet
-      interval: 5s
-      timeout: 30s
-      start_period: 0s
-      start_interval: 1s
-      retries: 30
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
     networks:
       - mynetwork
-
-  mailserverTest:
-    restart: always
-    image: mailhog/mailhog:latest
-    container_name: mailserverTest
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    networks:
-      - mynetwork
-
-volumes:
-  mongo-data:
+    
+ # mailserverTest:
+  #  restart: always
+   # image: mailhog/mailhog:latest
+    #container_name: mailserverTest
+   # ports:
+    #  - "1025:1025"
+    #  - "8025:8025"
+   # networks:
+    #  - mynetwork
 
 networks:
   mynetwork:
