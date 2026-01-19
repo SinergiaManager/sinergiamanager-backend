@@ -1,0 +1,10 @@
+```sql
+CREATE TABLE warehouses (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    code VARCHAR,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
